@@ -1,0 +1,75 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+
+namespace PuyoTextEditor.Text
+{
+    public class Utf16MtxEncoding : MtxEncoding
+    {
+        /// <summary>
+        /// Calculates the number of bytes produced by encoding the characters in the specified string.
+        /// </summary>
+        /// <param name="str">The string containing the set of characters to encode</param>
+        /// <returns>The number of bytes produced by encoding the specified characters.</returns>
+        public override int GetByteCount(string str) => Encoding.Unicode.GetByteCount(Unescape(str)) + 2;
+
+        public override string Read(BinaryReader reader)
+        {
+            var stringBuilder = new StringBuilder();
+            char @char;
+            while ((@char = reader.ReadChar()) != '\uf8ff')
+            {
+                switch (@char)
+                {
+                    case '\uf800':
+                        stringBuilder.Append($"{{color:{reader.ReadUInt16()}}}");
+                        break;
+                    case '\uf801':
+                        stringBuilder.Append("{/color}");
+                        break;
+                    case '\uf812':
+                        stringBuilder.Append("{clear}");
+                        break;
+                    case '\uf813':
+                        stringBuilder.Append("{arrow}");
+                        break;
+                    case '\uf881':
+                        stringBuilder.Append($"{{wait:{reader.ReadUInt16()}}}");
+                        break;
+                    case '\uf8fd':
+                        stringBuilder.Append("\n");
+                        break;
+                    default:
+                        stringBuilder.Append(@char);
+                        break;
+                }
+            }
+
+            return stringBuilder.ToString();
+        }
+
+        public override void Write(BinaryWriter writer, string str)
+        {
+            writer.Write(Encoding.Unicode.GetBytes(Unescape(str)));
+            writer.Write('\uf8ff');
+        }
+
+        private static string Unescape(string str)
+        {
+            var patterns = new Dictionary<string, MatchEvaluator>
+            {
+                [@"\{color:(\d+)\}"] = match => "\uf800" + ((char)ushort.Parse(match.Groups[1].Value)),
+                [@"\{/color\}"] = match => "\uf801",
+                [@"\{clear\}"] = match => "\uf812",
+                [@"\{arrow\}"] = match => "\uf813",
+                [@"\{wait:(\d+)\}"] = match => "\uf881" + ((char)ushort.Parse(match.Groups[1].Value)),
+                [@"\n"] = Match => "\uf8fd",
+            };
+
+            return patterns.Aggregate(str, (current, replacement) => Regex.Replace(current, replacement.Key, replacement.Value));
+        }
+    }
+}
