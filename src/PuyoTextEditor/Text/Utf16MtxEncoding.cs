@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -14,7 +13,7 @@ namespace PuyoTextEditor.Text
         /// </summary>
         /// <param name="str">The string containing the set of characters to encode</param>
         /// <returns>The number of bytes produced by encoding the specified characters.</returns>
-        public override int GetByteCount(string str) => Encoding.Unicode.GetByteCount(Unescape(str)) + 2;
+        public override int GetByteCount(string s) => Encoding.Unicode.GetByteCount(Unescape(s)) + 2;
 
         public override string Read(BinaryReader reader)
         {
@@ -51,13 +50,13 @@ namespace PuyoTextEditor.Text
             return stringBuilder.ToString();
         }
 
-        public override void Write(BinaryWriter writer, string str)
+        public override void Write(BinaryWriter writer, string s)
         {
-            writer.Write(Encoding.Unicode.GetBytes(Unescape(str)));
+            writer.Write(Encoding.Unicode.GetBytes(Unescape(s)));
             writer.Write('\uf8ff');
         }
 
-        private static string Unescape(string str)
+        private static string Unescape(string s)
         {
             var patterns = new Dictionary<string, MatchEvaluator>
             {
@@ -69,7 +68,7 @@ namespace PuyoTextEditor.Text
                 [@"\n"] = Match => "\uf8fd",
             };
 
-            return patterns.Aggregate(str, (current, replacement) => Regex.Replace(current, replacement.Key, replacement.Value));
+            return patterns.Aggregate(s, (current, replacement) => Regex.Replace(current, replacement.Key, replacement.Value));
         }
     }
 }

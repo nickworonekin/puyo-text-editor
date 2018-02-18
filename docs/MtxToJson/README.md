@@ -23,7 +23,8 @@ When this option is set to auto, the output format will be determined by the fil
 
 **-v &lt;version&gt;** or **--version &lt;version&gt;**
 
-**Required**. The MTX version. Can be one of the following values:
+The MTX version. Can be one of the following values:
+* auto (default)
 * 1
 * 2
 
@@ -36,6 +37,8 @@ Use 2 for MTX files used in the following games:
 * Puyo Puyo Tetris
 * Puyo Puyo Chronicle
 
+When this option is set to auto, the version will be 1 if the fnt or fpd options are set, otherwise it will be 2.
+
 **--fnt &lt;fnt&gt;**
 
 The FNT file to use. This is only required when version is 1 and fpd is not set.
@@ -46,7 +49,7 @@ The FPD file to use. This is only required when version is 1 and fnt is not set.
 
 **--64bit**
 
-When converting to MTX and version is 2, specifies offsets are 64-bit integers. Only set this when the MTX files are being used in the Switch version of Puyo Puyo Tetris.
+When converting to MTX and version is 2, specifies offsets are 64-bit integers. Only set this when the MTX files are being used on the Switch version of Puyo Puyo Tetris.
 
 **-o &lt;output&gt;** or **--output &lt;output&gt;**
 

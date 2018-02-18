@@ -1,14 +1,9 @@
-﻿using MakeFont.IO;
-using McMaster.Extensions.CommandLineUtils;
-using PuyoTextEditor.FileFormats;
-using System;
+﻿using McMaster.Extensions.CommandLineUtils;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace MakeFont
 {
@@ -45,8 +40,8 @@ namespace MakeFont
         {
             foreach (var file in Files)
             {
-                var strings = MtxJsonFile.Read(file);
-                Console.WriteLine(string.Join("", GetUniqueChars(strings)));
+                //var strings = MtxJsonFile.Read(file);
+                //Console.WriteLine(string.Join("", GetUniqueChars(strings)));
             }
         }
 

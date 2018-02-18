@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -20,9 +19,9 @@ namespace PuyoTextEditor.Text
         /// <summary>
         /// Calculates the number of bytes produced by encoding the characters in the specified string.
         /// </summary>
-        /// <param name="str">The string containing the set of characters to encode</param>
+        /// <param name="s">The string containing the set of characters to encode</param>
         /// <returns>The number of bytes produced by encoding the specified characters.</returns>
-        public override int GetByteCount(string str) => Encoding.Unicode.GetByteCount(Unescape(str)) + 2;
+        public override int GetByteCount(string s) => Encoding.Unicode.GetByteCount(Unescape(s)) + 2;
 
         /// <summary>
         /// Reads an encoded string from an MTX file.
@@ -71,9 +70,9 @@ namespace PuyoTextEditor.Text
             return stringBuilder.ToString();
         }
 
-        public override void Write(BinaryWriter writer, string str)
+        public override void Write(BinaryWriter writer, string s)
         {
-            foreach (var @char in Unescape(str))
+            foreach (var @char in Unescape(s))
             {
                 if (characterMap.ContainsValue(@char))
                 {
@@ -88,7 +87,7 @@ namespace PuyoTextEditor.Text
             writer.Write('\uffff');
         }
 
-        private static string Unescape(string str)
+        private static string Unescape(string s)
         {
             var patterns = new Dictionary<string, MatchEvaluator>
             {
@@ -101,7 +100,7 @@ namespace PuyoTextEditor.Text
                 [@"\\u(?<Value>[a-fA-F0-9]{4})"] = match => ((char)ushort.Parse(match.Groups["Value"].Value, NumberStyles.HexNumber)).ToString(),
             };
 
-            return patterns.Aggregate(str, (current, replacement) => Regex.Replace(current, replacement.Key, replacement.Value));
+            return patterns.Aggregate(s, (current, replacement) => Regex.Replace(current, replacement.Key, replacement.Value));
         }
     }
 }

@@ -1,13 +1,11 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
-using PuyoTextEditor.FileFormats;
+using PuyoTextEditor.Formats;
+using PuyoTextEditor.Serialization;
 using PuyoTextEditor.Text;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MtxToJson
 {
@@ -24,10 +22,9 @@ namespace MtxToJson
         [Values("auto", "mtx", "json")]
         public string Format { get; set; }
 
-        [Required]
         [Option("-v | --version <version>",
-            Description = "The MTX version (1, 2). Use 1 for 15th, 7, and 20th. Use 2 for Tetris and Chronicle.")]
-        [Values("1", "2")]
+            Description = "The MTX version (auto, 1, 2). Use 1 for 15th, 7, and 20th. Use 2 for Tetris and Chronicle. Defaults to auto.")]
+        [Values("auto", "1", "2")]
         public string Version { get; set; }
 
         [Option("--fnt <fnt>",
@@ -71,7 +68,19 @@ namespace MtxToJson
             }
 
             MtxEncoding encoding = null;
-            if (Version == "1")
+            var version = Version ?? "auto";
+            if (version == "auto")
+            {
+                if (FntPath != null || FpdPath != null)
+                {
+                    version = "1";
+                }
+                else
+                {
+                    version = "2";
+                }
+            }
+            if (version == "1")
             {
                 if (FntPath != null)
                 {
@@ -81,11 +90,11 @@ namespace MtxToJson
                         return;
                     }
 
-                    var fntFile = FntFile.Read(FntPath);
-                    var characterMap = fntFile.Select((item, index) => new
+                    var fntFile = new FntFile(FntPath);
+                    var characterMap = fntFile.Entries.Select((item, index) => new
                     {
                         Index = (ushort)index,
-                        Item = item.Character,
+                        Item = item.Key,
                     })
                     .ToDictionary(x => x.Index, x => x.Item);
 
@@ -99,11 +108,11 @@ namespace MtxToJson
                         return;
                     }
 
-                    var fpdFile = FpdFile.Read(FpdPath);
-                    var characterMap = fpdFile.Select((item, index) => new
+                    var fpdFile = new FpdFile(FpdPath);
+                    var characterMap = fpdFile.Entries.Select((item, index) => new
                     {
                         Index = (ushort)index,
-                        Item = item.Character,
+                        Item = item.Key,
                     })
                     .ToDictionary(x => x.Index, x => x.Item);
                     encoding = new CharacterMapMtxEncoding(characterMap);
@@ -114,7 +123,7 @@ namespace MtxToJson
                     return;
                 }
             }
-            else if (Version == "2")
+            else if (version == "2")
             {
                 encoding = new Utf16MtxEncoding();
             }
@@ -153,9 +162,8 @@ namespace MtxToJson
 
                     try
                     {
-                        var mtxFile = MtxFile.Read(file, encoding);
-                        var mtxJsonFile = new MtxJsonFile(mtxFile);
-                        mtxJsonFile.Write(outputFilename);
+                        var mtxFile = new MtxFile(file, encoding);
+                        Json.Write(outputFilename, mtxFile.Entries);
                     }
                     catch (Exception e)
                     {
@@ -169,9 +177,9 @@ namespace MtxToJson
 
                     try
                     {
-                        var mtxJsonFile = MtxJsonFile.Read(file);
-                        var mtxFile = new MtxFile(mtxJsonFile, encoding, Has64BitOffsets);
-                        mtxFile.Write(outputFilename);
+                        var strings = Json.Read<List<List<string>>>(file);
+                        var mtxFile = new MtxFile(strings, encoding, Has64BitOffsets);
+                        mtxFile.Save(outputFilename);
                     }
                     catch (Exception e)
                     {
