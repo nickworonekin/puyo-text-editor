@@ -1,4 +1,5 @@
 ﻿using PuyoTextEditor.IO;
+using PuyoTextEditor.Resources;
 using PuyoTextEditor.Text;
 using System;
 using System.Collections.Generic;
@@ -45,7 +46,7 @@ namespace PuyoTextEditor.Formats
                 var length = reader.PeekInt32();
                 if (length != source.Length)
                 {
-                    throw new IOException($"{path} is not a valid MTX file.");
+                    throw new IOException(string.Format(ErrorMessages.InvalidMtxFile, path));
                 }
 
                 Func<int> ReadInt, PeekInt;
@@ -65,8 +66,8 @@ namespace PuyoTextEditor.Formats
                     // This MTX file uses 32-bit offsets
                     Has64BitOffsets = false;
                     intSize = 4;
-                    ReadInt = () => reader.ReadInt32();
-                    PeekInt = () => reader.PeekInt32();
+                    ReadInt = reader.ReadInt32;
+                    PeekInt = reader.PeekInt32;
                 }
                 else
                 {
@@ -85,7 +86,7 @@ namespace PuyoTextEditor.Formats
 
                     else
                     {
-                        throw new IOException($"{path} is not a valid MTX file.");
+                        throw new IOException(string.Format(ErrorMessages.InvalidMtxFile, path));
                     }
                 }
 
@@ -144,7 +145,7 @@ namespace PuyoTextEditor.Formats
                 else
                 {
                     intSize = 4;
-                    WriteInt = value => writer.Write(value);
+                    WriteInt = writer.Write;
                 }
 
                 // Start writing the header

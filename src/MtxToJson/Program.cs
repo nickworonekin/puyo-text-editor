@@ -1,4 +1,5 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
+using MtxToJson.Resources;
 using PuyoTextEditor.Formats;
 using PuyoTextEditor.Serialization;
 using PuyoTextEditor.Text;
@@ -19,12 +20,12 @@ namespace MtxToJson
 
         [Option("-f | --format <format>",
             Description = "The output format (auto, mtx, json). Defaults to auto.")]
-        [Values("auto", "mtx", "json")]
+        [AllowedValues("auto", "mtx", "json")]
         public string Format { get; set; }
 
         [Option("-v | --version <version>",
             Description = "The MTX version (auto, 1, 2). Use 1 for 15th, 7, and 20th. Use 2 for Tetris and Chronicle. Defaults to auto.")]
-        [Values("auto", "1", "2")]
+        [AllowedValues("auto", "1", "2")]
         public string Version { get; set; }
 
         [Option("--fnt <fnt>",
@@ -86,40 +87,35 @@ namespace MtxToJson
                 {
                     if (!File.Exists(FntPath))
                     {
-                        Error($"\"{FntPath}\" does not exist or cannot be read.");
+                        Error(string.Format(ErrorMessages.FileDoesNotExist, FntPath));
                         return;
                     }
 
                     var fntFile = new FntFile(FntPath);
-                    var characterMap = fntFile.Entries.Select((item, index) => new
-                    {
-                        Index = (ushort)index,
-                        Item = item.Key,
-                    })
-                    .ToDictionary(x => x.Index, x => x.Item);
+                    var chars = fntFile.Entries
+                        .Select(x => x.Key)
+                        .ToList();
 
-                    encoding = new CharacterMapMtxEncoding(characterMap);
+                    encoding = new CharacterMapMtxEncoding(chars);
                 }
                 else if (FpdPath != null)
                 {
                     if (!File.Exists(FpdPath))
                     {
-                        Error($"\"{FpdPath}\" does not exist or cannot be read.");
+                        Error(string.Format(ErrorMessages.FileDoesNotExist, FpdPath));
                         return;
                     }
 
                     var fpdFile = new FpdFile(FpdPath);
-                    var characterMap = fpdFile.Entries.Select((item, index) => new
-                    {
-                        Index = (ushort)index,
-                        Item = item.Key,
-                    })
-                    .ToDictionary(x => x.Index, x => x.Item);
-                    encoding = new CharacterMapMtxEncoding(characterMap);
+                    var chars = fpdFile.Entries
+                        .Select(x => x.Key)
+                        .ToList();
+
+                    encoding = new CharacterMapMtxEncoding(chars);
                 }
                 else
                 {
-                    Error("The fpd or fnt option must be set when version is 1.");
+                    Error(ErrorMessages.FntOrFpdOptionMustBeSet);
                     return;
                 }
             }
@@ -132,7 +128,7 @@ namespace MtxToJson
             {
                 if (!File.Exists(file))
                 {
-                    Error($"\"{file}\" does not exist or cannot be read. Skipping file...");
+                    Error(string.Format(ErrorMessages.FileDoesNotExist, file));
                     continue;
                 }
 
@@ -151,7 +147,7 @@ namespace MtxToJson
                     }
                     else
                     {
-                        Error($"Could not determine output format for \"{file}\". Skipping file...");
+                        Error(string.Format(ErrorMessages.CouldNotDetermineOutputFormat, file));
                         continue;
                     }
                 }

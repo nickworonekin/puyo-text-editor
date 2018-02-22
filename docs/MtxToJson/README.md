@@ -70,11 +70,11 @@ The MTX-converted JSON files are structured as follows:
 ]
 ```
 
-### Commands
+### Escape Sequences
 
-The following commands are supported in each string in the JSON file.
+The following escape sequences are supported in each string in the JSON file.
 
-| Command       | Description |
+| Sequence      | Description |
 |---------------|-------------|
 | **\n**        | New line
 | **{arrow}**   | Shows the arrow and waits for user input before proceeding.

@@ -9,11 +9,19 @@ namespace PuyoTextEditor.Text
 {
     public class CharacterMapMtxEncoding : MtxEncoding
     {
-        private Dictionary<ushort, char> characterMap;
+        private readonly Dictionary<ushort, char> indexToCharDictionary;
+        private readonly Dictionary<char, ushort> charToIndexDictionary;
 
-        public CharacterMapMtxEncoding(Dictionary<ushort, char> characterMap)
+        public CharacterMapMtxEncoding(IList<char> chars)
         {
-            this.characterMap = characterMap;
+            indexToCharDictionary = new Dictionary<ushort, char>(chars.Count);
+            charToIndexDictionary = new Dictionary<char, ushort>(chars.Count);
+
+            for (ushort i = 0; i < chars.Count; i++)
+            {
+                indexToCharDictionary.Add(i, chars[i]);
+                charToIndexDictionary.Add(chars[i], i);
+            }
         }
 
         /// <summary>
@@ -31,10 +39,10 @@ namespace PuyoTextEditor.Text
         public override string Read(BinaryReader reader)
         {
             var stringBuilder = new StringBuilder();
-            ushort @char;
-            while ((@char = reader.ReadUInt16()) != 0xffff)
+            ushort c;
+            while ((c = reader.ReadUInt16()) != 0xffff)
             {
-                switch (@char)
+                switch (c)
                 {
                     case 0xf800:
                         stringBuilder.Append($"{{color:{reader.ReadUInt16()}}}");
@@ -55,13 +63,13 @@ namespace PuyoTextEditor.Text
                         stringBuilder.Append("\n");
                         break;
                     default:
-                        if (characterMap.ContainsKey(@char))
+                        if (indexToCharDictionary.ContainsKey(c))
                         {
-                            stringBuilder.Append(characterMap[@char]);
+                            stringBuilder.Append(indexToCharDictionary[c]);
                         }
                         else
                         {
-                            stringBuilder.Append(@"\u" + @char.ToString("x4"));
+                            stringBuilder.Append(@"\u" + c.ToString("x4"));
                         }
                         break;
                 }
@@ -72,15 +80,15 @@ namespace PuyoTextEditor.Text
 
         public override void Write(BinaryWriter writer, string s)
         {
-            foreach (var @char in Unescape(s))
+            foreach (var c in Unescape(s))
             {
-                if (characterMap.ContainsValue(@char))
+                if (charToIndexDictionary.ContainsKey(c))
                 {
-                    writer.Write(characterMap.First(x => x.Value == @char).Key);
+                    writer.Write(charToIndexDictionary[c]);
                 }
                 else
                 {
-                    writer.Write(@char);
+                    writer.Write(c);
                 }
             }
 

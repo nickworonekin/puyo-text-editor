@@ -18,10 +18,10 @@ namespace PuyoTextEditor.Text
         public override string Read(BinaryReader reader)
         {
             var stringBuilder = new StringBuilder();
-            char @char;
-            while ((@char = reader.ReadChar()) != '\uf8ff')
+            char c;
+            while ((c = reader.ReadChar()) != '\uf8ff')
             {
-                switch (@char)
+                switch (c)
                 {
                     case '\uf800':
                         stringBuilder.Append($"{{color:{reader.ReadUInt16()}}}");
@@ -42,7 +42,7 @@ namespace PuyoTextEditor.Text
                         stringBuilder.Append("\n");
                         break;
                     default:
-                        stringBuilder.Append(@char);
+                        stringBuilder.Append(c);
                         break;
                 }
             }

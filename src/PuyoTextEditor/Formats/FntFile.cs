@@ -1,4 +1,5 @@
 ﻿using PuyoTextEditor.Collections;
+using PuyoTextEditor.Resources;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -35,7 +36,7 @@ namespace PuyoTextEditor.Formats
                 // FNT files start with the magic code FNT(null)
                 if (!(reader.ReadByte() == 'F' && reader.ReadByte() == 'N' && reader.ReadByte() == 'T' && reader.ReadByte() == 0))
                 {
-                    throw new IOException($"{path} is not a valid FNT file.");
+                    throw new IOException(string.Format(ErrorMessages.InvalidFntFile, path));
                 }
 
                 Height = reader.ReadInt32();
@@ -60,7 +61,7 @@ namespace PuyoTextEditor.Formats
                 }
                 else
                 {
-                    throw new IOException($"{path} is not a valid FNT file.");
+                    throw new IOException(string.Format(ErrorMessages.InvalidFntFile, path));
                 }
 
                 while (source.Position < source.Length)
