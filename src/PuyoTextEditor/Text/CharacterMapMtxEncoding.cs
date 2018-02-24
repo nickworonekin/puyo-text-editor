@@ -12,15 +12,17 @@ namespace PuyoTextEditor.Text
         private readonly Dictionary<ushort, char> indexToCharDictionary;
         private readonly Dictionary<char, ushort> charToIndexDictionary;
 
-        public CharacterMapMtxEncoding(IList<char> chars)
+        public CharacterMapMtxEncoding(ICollection<char> chars)
         {
             indexToCharDictionary = new Dictionary<ushort, char>(chars.Count);
             charToIndexDictionary = new Dictionary<char, ushort>(chars.Count);
 
-            for (ushort i = 0; i < chars.Count; i++)
+            ushort index = 0;
+            foreach (var item in chars)
             {
-                indexToCharDictionary.Add(i, chars[i]);
-                charToIndexDictionary.Add(chars[i], i);
+                indexToCharDictionary.Add(index, item);
+                charToIndexDictionary.Add(item, index);
+                index++;
             }
         }
 
