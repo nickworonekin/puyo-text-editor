@@ -1,4 +1,7 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
+using PuyoTextEditor.Formats;
+using PuyoTextEditor.Serialization;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
@@ -40,6 +43,8 @@ namespace MakeFont
         {
             foreach (var file in Files)
             {
+                //var fifFile = new FifFile(file);
+                //Json.Write(file + ".json", fifFile);
                 //var strings = MtxJsonFile.Read(file);
                 //Console.WriteLine(string.Join("", GetUniqueChars(strings)));
             }

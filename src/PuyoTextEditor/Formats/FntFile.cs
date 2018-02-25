@@ -16,6 +16,9 @@ namespace PuyoTextEditor.Formats
 
         public bool HasImages { get; }
 
+        /// <summary>
+        /// Gets the collection of entries that are currently in this file.
+        /// </summary>
         public OrderedDictionary<char, FntEntry> Entries { get; }
 
         public FntFile(int width, int height, bool hasImages)

@@ -62,6 +62,15 @@ namespace PuyoTextEditor.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &apos;{0}&apos; is not a valid FIF file..
+        /// </summary>
+        internal static string InvalidFifFile {
+            get {
+                return ResourceManager.GetString("InvalidFifFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; is not a valid FNT file..
         /// </summary>
         internal static string InvalidFntFile {
@@ -85,6 +94,15 @@ namespace PuyoTextEditor.Resources {
         internal static string InvalidMtxFile {
             get {
                 return ResourceManager.GetString("InvalidMtxFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &apos;{0}&apos; cannot be larger than &apos;{1}&apos;..
+        /// </summary>
+        internal static string ParameterCannotBeLargerThan {
+            get {
+                return ResourceManager.GetString("ParameterCannotBeLargerThan", resourceCulture);
             }
         }
     }

@@ -13,10 +13,13 @@ namespace PuyoTextEditor.Formats
         private readonly MtxEncoding encoding;
 
         /// <summary>
-        /// Gets if this MTX file uses 64-bit offsets.
+        /// Gets if this file uses 64-bit integer offsets.
         /// </summary>
         public bool Has64BitOffsets { get; }
 
+        /// <summary>
+        /// Gets the collection of entries that are currently in this file.
+        /// </summary>
         public List<List<string>> Entries { get; }
 
         public MtxFile(MtxEncoding encoding, bool has64BitOffsets = false)

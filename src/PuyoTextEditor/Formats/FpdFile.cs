@@ -8,6 +8,9 @@ namespace PuyoTextEditor.Formats
 {
     public class FpdFile : IFormat
     {
+        /// <summary>
+        /// Gets the collection of entries that are currently in this file.
+        /// </summary>
         public OrderedDictionary<char, FpdEntry> Entries { get; }
 
         public FpdFile()
