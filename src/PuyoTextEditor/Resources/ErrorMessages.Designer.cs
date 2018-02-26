@@ -98,6 +98,15 @@ namespace PuyoTextEditor.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &apos;{0}&apos; must be a power of 2..
+        /// </summary>
+        internal static string MustBePowerOfTwo {
+            get {
+                return ResourceManager.GetString("MustBePowerOfTwo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; cannot be larger than &apos;{1}&apos;..
         /// </summary>
         internal static string ParameterCannotBeLargerThan {

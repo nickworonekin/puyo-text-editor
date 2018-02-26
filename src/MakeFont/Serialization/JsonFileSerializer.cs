@@ -1,11 +1,11 @@
 ﻿using Newtonsoft.Json;
 using System.IO;
 
-namespace PuyoTextEditor.Serialization
+namespace MakeFont.Serialization
 {
-    public static class Json
+    public static class JsonFileSerializer
     {
-        public static T Read<T>(string path)
+        public static T Deserialize<T>(string path)
         {
             using (var source = new FileStream(path, FileMode.Open, FileAccess.Read))
             using (var streamReader = new StreamReader(source))
@@ -16,7 +16,7 @@ namespace PuyoTextEditor.Serialization
             }
         }
 
-        public static void Write(string path, object obj)
+        public static void Serialize(string path, object obj)
         {
             using (var destination = new FileStream(path, FileMode.Create, FileAccess.Write))
             using (var textWriter = new StreamWriter(destination))

@@ -25,8 +25,6 @@ namespace PuyoTextEditor.Formats
 
         public FpdFile(string path)
         {
-            Entries = new OrderedDictionary<char, FpdEntry>();
-
             using (var source = new FileStream(path, FileMode.Open, FileAccess.Read))
             using (var reader = new BinaryReader(source, Encoding.Unicode))
             {
@@ -36,6 +34,8 @@ namespace PuyoTextEditor.Formats
                 {
                     throw new IOException(string.Format(ErrorMessages.InvalidFpdFile, path));
                 }
+
+                Entries = new OrderedDictionary<char, FpdEntry>((int)(source.Length / 3));
 
                 while (source.Position < source.Length)
                 {

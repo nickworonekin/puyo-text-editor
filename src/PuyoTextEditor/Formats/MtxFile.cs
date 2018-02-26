@@ -23,17 +23,23 @@ namespace PuyoTextEditor.Formats
         public List<List<string>> Entries { get; }
 
         public MtxFile(MtxEncoding encoding, bool has64BitOffsets = false)
+            : this(null, encoding, has64BitOffsets)
         {
-            this.encoding = encoding;
-            Has64BitOffsets = has64BitOffsets;
-            Entries = new List<List<string>>();
         }
 
         public MtxFile(IEnumerable<List<string>> collection, MtxEncoding encoding, bool has64BitOffsets = false)
         {
+            if (collection != null)
+            {
+                Entries = new List<List<string>>(collection);
+            }
+            else
+            {
+                Entries = new List<List<string>>();
+            }
+
             this.encoding = encoding;
             Has64BitOffsets = has64BitOffsets;
-            Entries = new List<List<string>>(collection);
         }
 
         public MtxFile(string path, MtxEncoding encoding)

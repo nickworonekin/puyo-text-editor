@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace PuyoTextEditor.Formats
+﻿namespace PuyoTextEditor.Formats
 {
     public class FifEntry
     {

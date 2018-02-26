@@ -129,6 +129,9 @@
   <data name="InvalidMtxFile" xml:space="preserve">
     <value>'{0}' is not a valid MTX file.</value>
   </data>
+  <data name="MustBePowerOfTwo" xml:space="preserve">
+    <value>'{0}' must be a power of 2.</value>
+  </data>
   <data name="ParameterCannotBeLargerThan" xml:space="preserve">
     <value>'{0}' cannot be larger than '{1}'.</value>
   </data>

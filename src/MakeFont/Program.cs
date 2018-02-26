@@ -1,7 +1,4 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
-using PuyoTextEditor.Formats;
-using PuyoTextEditor.Serialization;
-using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;

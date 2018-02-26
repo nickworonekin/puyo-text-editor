@@ -57,8 +57,11 @@
     <Compile Include="IO\FifFile.cs" />
     <Compile Include="IO\FifJsonEntry.cs" />
     <Compile Include="IO\FifJsonFile.cs" />
+    <Compile Include="Models\FifJson.cs" />
+    <Compile Include="Models\MtxJson.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Serialization\JsonFileSerializer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

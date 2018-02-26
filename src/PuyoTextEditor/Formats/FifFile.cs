@@ -1,10 +1,8 @@
-﻿using Newtonsoft.Json;
-using PuyoTextEditor.Collections;
+﻿using PuyoTextEditor.Collections;
 using PuyoTextEditor.Resources;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
 using System.Text;
 
 namespace PuyoTextEditor.Formats
@@ -19,7 +17,6 @@ namespace PuyoTextEditor.Formats
         /// <summary>
         /// Get the number of characters in each font texture.
         /// </summary>
-        [JsonIgnore]
         public int CharactersPerTexture { get; set; }
 
         /// <summary>
@@ -36,32 +33,27 @@ namespace PuyoTextEditor.Formats
         /// Gets the width of the last font texture.
         /// </summary>
         /// <remarks>This will be equal to <see cref="Width"/> when <see cref="TextureCount"/> is 1.</remarks>
-        [JsonIgnore]
         public short LastWidth { get; }
 
         /// <summary>
         /// Gets the height of the last font texture.
         /// </summary>
         /// <remarks>This will be equal to <see cref="Height"/> when <see cref="TextureCount"/> is 1.</remarks>
-        [JsonIgnore]
         public short LastHeight { get; }
 
         /// <summary>
         /// Gets the number of font textures.
         /// </summary>
-        [JsonIgnore]
         public short TextureCount { get; }
 
         /// <summary>
         /// Gets the number of characters per row.
         /// </summary>
-        [JsonIgnore]
         public short CharactersPerRow { get; }
 
         /// <summary>
         /// Gets the number of rows.
         /// </summary>
-        [JsonIgnore]
         public short RowCount { get; }
 
         /// <summary>
@@ -77,13 +69,11 @@ namespace PuyoTextEditor.Formats
         /// <summary>
         /// Gets the width of each column.
         /// </summary>
-        [JsonIgnore]
         public short ColumnWidth { get; }
 
         /// <summary>
         /// Gets the height of each row.
         /// </summary>
-        [JsonIgnore]
         public short RowHeight { get; }
 
         /// <summary>
@@ -92,18 +82,21 @@ namespace PuyoTextEditor.Formats
         public OrderedDictionary<char, FifEntry> Entries { get; }
 
         public FifFile(short width, short height, short characterWidth, short characterHeight, bool isBigEndian = false)
-            : this(new OrderedDictionary<char, FifEntry>(), width, height, characterWidth, characterHeight, isBigEndian)
+            : this(null, width, height, characterWidth, characterHeight, isBigEndian)
         {
         }
 
-        [JsonConstructor]
         public FifFile(IDictionary<char, FifEntry> collection, short width, short height, short characterWidth, short characterHeight, bool isBigEndian = false)
-            : this(new OrderedDictionary<char, FifEntry>(collection), width, height, characterWidth, characterHeight, isBigEndian)
         {
-        }
+            if (collection != null)
+            {
+                Entries = new OrderedDictionary<char, FifEntry>(collection);
+            }
+            else
+            {
+                Entries = new OrderedDictionary<char, FifEntry>();
+            }
 
-        private FifFile(OrderedDictionary<char, FifEntry> collection, short width, short height, short characterWidth, short characterHeight, bool isBigEndian)
-        {
             // Make sure the character width/height (with expected padding) aren't larger than the width/height
             if (characterWidth + 2 > width)
             {
@@ -116,16 +109,17 @@ namespace PuyoTextEditor.Formats
 
             Width = width;
             Height = height;
-            LastWidth = width;
-            LastHeight = height;
             CharacterWidth = characterWidth;
             CharacterHeight = characterHeight;
+
+            // Calculate the other properties based on the parameters passed
+            LastWidth = width;
+            LastHeight = height;
             ColumnWidth = (short)(characterWidth + 2);
             RowHeight = (short)(characterHeight + 2);
-
-            // Calculate the number of characters per row and the number of rows
             CharactersPerRow = (short)(width / characterWidth);
             RowCount = (short)(height / characterHeight);
+            CharactersPerTexture = CharactersPerRow * RowCount;
         }
 
         public FifFile(string path)
@@ -167,7 +161,7 @@ namespace PuyoTextEditor.Formats
                 // The next 16-bit integer appears to always be 101 (0x65)
                 if (ReadInt16() != 101)
                 {
-                    throw new IOException(string.Format(ErrorMessages.InvalidFifFile + "2", path));
+                    throw new IOException(string.Format(ErrorMessages.InvalidFifFile, path));
                 }
 
                 var entryTableOffset = ReadInt16(); // This is usually always 56
@@ -176,7 +170,7 @@ namespace PuyoTextEditor.Formats
                 // Check the file size and make sure it is expected size
                 if (source.Length != entryTableOffset + (entryCount * 16))
                 {
-                    throw new IOException(string.Format(ErrorMessages.InvalidFifFile + "3", path));
+                    throw new IOException(string.Format(ErrorMessages.InvalidFifFile, path));
                 }
 
                 CharactersPerTexture = ReadInt32();
@@ -195,13 +189,13 @@ namespace PuyoTextEditor.Formats
                 // The next value appears to always be equal to CharacterHeight
                 if (ReadInt16() != CharacterHeight)
                 {
-                    throw new IOException(string.Format(ErrorMessages.InvalidFifFile + "4", path));
+                    throw new IOException(string.Format(ErrorMessages.InvalidFifFile, path));
                 }
 
                 // The next two bytes appear to be 32 and 1
                 if (!(reader.ReadByte() == 32 && reader.ReadByte() == 1))
                 {
-                    throw new IOException(string.Format(ErrorMessages.InvalidFifFile + "5", path));
+                    throw new IOException(string.Format(ErrorMessages.InvalidFifFile, path));
                 }
 
                 source.Position = entryTableOffset;
@@ -220,7 +214,7 @@ namespace PuyoTextEditor.Formats
                     // If it's not equal to i, throw an exception.
                     if (index != i)
                     {
-                        throw new IOException(string.Format(ErrorMessages.InvalidFifFile + "6", path));
+                        throw new IOException(string.Format(ErrorMessages.InvalidFifFile, path));
                     }
 
                     Entries.Add(character, new FifEntry
@@ -244,13 +238,55 @@ namespace PuyoTextEditor.Formats
             {
                 writer.Write(new byte[] { (byte)'F', (byte)'O', (byte)'N', (byte)'T', (byte)'D', (byte)'A', (byte)'T', (byte)'F' });
 
+                Action<char> WriteChar;
+                Action<short> WriteInt16;
+                Action<int> WriteInt32;
+
                 if (IsBigEndian)
                 {
+                    WriteChar = value => writer.Write(EndianConverter.Convert(value));
+                    WriteInt16 = value => writer.Write(EndianConverter.Convert(value));
+                    WriteInt32 = value => writer.Write(EndianConverter.Convert(value));
+
                     writer.Write(1);
                 }
                 else
                 {
+                    WriteChar = writer.Write;
+                    WriteInt16 = writer.Write;
+                    WriteInt32 = writer.Write;
+
                     writer.Write(0);
+                }
+
+                WriteInt16(101);
+                WriteInt16(56);
+                WriteInt32(Entries.Count);
+                WriteInt32(CharactersPerTexture);
+                WriteInt16(TextureCount);
+                WriteInt16(Width);
+                WriteInt16(Height);
+                WriteInt16(LastWidth);
+                WriteInt16(LastHeight);
+                WriteInt16(CharactersPerRow);
+                WriteInt16(RowCount);
+                WriteInt16(CharacterWidth);
+                WriteInt16(CharacterHeight);
+                WriteInt16(ColumnWidth);
+                WriteInt16(RowHeight);
+                WriteInt16(CharacterHeight);
+                writer.Write(288L); // Cheat and write this value out as a long
+
+                short index = 0;
+                foreach (var entry in Entries)
+                {
+                    WriteInt32(entry.Value.Left);
+                    WriteInt32(entry.Value.Right);
+                    WriteInt32(entry.Value.Spacing);
+                    WriteChar(entry.Key);
+                    WriteInt16(index);
+
+                    index++;
                 }
             }
         }

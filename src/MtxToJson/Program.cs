@@ -1,7 +1,8 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
+using MtxToJson.Models;
 using MtxToJson.Resources;
+using MtxToJson.Serialization;
 using PuyoTextEditor.Formats;
-using PuyoTextEditor.Serialization;
 using PuyoTextEditor.Text;
 using System;
 using System.Collections.Generic;
@@ -159,7 +160,11 @@ namespace MtxToJson
                     try
                     {
                         var mtxFile = new MtxFile(file, encoding);
-                        Json.Write(outputFilename, mtxFile.Entries);
+                        var mtxJson = new MtxJson
+                        {
+                            Entries = mtxFile.Entries,
+                        };
+                        JsonFileSerializer.Serialize(outputFilename, mtxJson);
                     }
                     catch (Exception e)
                     {
@@ -173,8 +178,8 @@ namespace MtxToJson
 
                     try
                     {
-                        var strings = Json.Read<List<List<string>>>(file);
-                        var mtxFile = new MtxFile(strings, encoding, Has64BitOffsets);
+                        var mtxJson = JsonFileSerializer.Deserialize<MtxJson>(file);
+                        var mtxFile = new MtxFile(mtxJson.Entries, encoding, Has64BitOffsets);
                         mtxFile.Save(outputFilename);
                     }
                     catch (Exception e)
