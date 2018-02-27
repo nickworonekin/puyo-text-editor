@@ -162,6 +162,7 @@ namespace MtxToJson
                         var mtxFile = new MtxFile(file, encoding);
                         var mtxJson = new MtxJson
                         {
+                            Has64BitOffsets = mtxFile.Has64BitOffsets,
                             Entries = mtxFile.Entries,
                         };
                         JsonFileSerializer.Serialize(outputFilename, mtxJson);
@@ -179,7 +180,7 @@ namespace MtxToJson
                     try
                     {
                         var mtxJson = JsonFileSerializer.Deserialize<MtxJson>(file);
-                        var mtxFile = new MtxFile(mtxJson.Entries, encoding, Has64BitOffsets);
+                        var mtxFile = new MtxFile(mtxJson.Entries, encoding, mtxJson.Has64BitOffsets ? true : Has64BitOffsets);
                         mtxFile.Save(outputFilename);
                     }
                     catch (Exception e)
