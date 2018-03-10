@@ -34,6 +34,7 @@ Use 1 for MTX files used in the following games:
 * Puyo Puyo!! 20th Anniversary
 
 Use 2 for MTX files used in the following games:
+* Puyo Puyo!! Quest
 * Puyo Puyo Tetris
 * Puyo Puyo Chronicle
 

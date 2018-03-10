@@ -6,6 +6,7 @@ The following games are supported across all platforms:
 * Puyo Puyo! 15th Anniversary
 * Puyo Puyo 7
 * Puyo Puyo!! 20th Anniversary
+* Puyo Puyo!! Quest
 * Puyo Puyo Tetris
 * Puyo Puyo Chronicle
 
