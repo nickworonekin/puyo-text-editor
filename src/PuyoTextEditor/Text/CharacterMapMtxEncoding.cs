@@ -21,7 +21,10 @@ namespace PuyoTextEditor.Text
             foreach (var item in chars)
             {
                 indexToCharDictionary.Add(index, item);
-                charToIndexDictionary.Add(item, index);
+                if (!charToIndexDictionary.ContainsKey(item))
+                {
+                    charToIndexDictionary.Add(item, index);
+                }
                 index++;
             }
         }

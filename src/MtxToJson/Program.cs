@@ -93,11 +93,7 @@ namespace MtxToJson
                     }
 
                     var fntFile = new FntFile(FntPath);
-                    var chars = fntFile.Entries
-                        .Select(x => x.Key)
-                        .ToList();
-
-                    encoding = new CharacterMapMtxEncoding(chars);
+                    encoding = new CharacterMapMtxEncoding(fntFile.Characters);
                 }
                 else if (FpdPath != null)
                 {
@@ -108,11 +104,7 @@ namespace MtxToJson
                     }
 
                     var fpdFile = new FpdFile(FpdPath);
-                    var chars = fpdFile.Entries
-                        .Select(x => x.Key)
-                        .ToList();
-
-                    encoding = new CharacterMapMtxEncoding(chars);
+                    encoding = new CharacterMapMtxEncoding(fpdFile.Characters);
                 }
                 else
                 {

@@ -21,14 +21,21 @@ namespace PuyoTextEditor.Formats
         /// </summary>
         public OrderedDictionary<char, FntEntry> Entries { get; }
 
+        /// <summary>
+        /// Gets the characters that are currently in this file.
+        /// </summary>
+        public List<char> Characters { get; }
+
         public FntFile(int width, int height, bool hasImages)
         {
             Entries = new OrderedDictionary<char, FntEntry>();
+            Characters = new List<char>();
         }
 
         public FntFile(IDictionary<char, FntEntry> collection, int width, int height, bool hasImages)
         {
             Entries = new OrderedDictionary<char, FntEntry>(collection);
+            Characters = new List<char>(collection.Keys);
         }
 
         public FntFile(string path)
@@ -72,10 +79,14 @@ namespace PuyoTextEditor.Formats
                     var c = reader.ReadChar();
                     var width = reader.ReadInt16();
 
-                    Entries.Add(c, new FntEntry
+                    if (!Entries.ContainsKey(c))
                     {
-                        Width = width,
-                    });
+                        Entries.Add(c, new FntEntry
+                        {
+                            Width = width,
+                        });
+                    }
+                    Characters.Add(c);
 
                     if (HasImages)
                     {

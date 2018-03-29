@@ -13,14 +13,21 @@ namespace PuyoTextEditor.Formats
         /// </summary>
         public OrderedDictionary<char, FpdEntry> Entries { get; }
 
+        /// <summary>
+        /// Gets the characters that are currently in this file.
+        /// </summary>
+        public List<char> Characters { get; }
+
         public FpdFile()
         {
             Entries = new OrderedDictionary<char, FpdEntry>();
+            Characters = new List<char>();
         }
 
         public FpdFile(IDictionary<char, FpdEntry> collection)
         {
             Entries = new OrderedDictionary<char, FpdEntry>(collection);
+            Characters = new List<char>(collection.Keys);
         }
 
         public FpdFile(string path)
@@ -36,16 +43,21 @@ namespace PuyoTextEditor.Formats
                 }
 
                 Entries = new OrderedDictionary<char, FpdEntry>((int)(source.Length / 3));
+                Characters = new List<char>((int)(source.Length / 3));
 
                 while (source.Position < source.Length)
                 {
                     var c = reader.ReadChar();
                     var width = reader.ReadByte();
 
-                    Entries.Add(c, new FpdEntry
+                    if (!Entries.ContainsKey(c))
                     {
-                        Width = width,
-                    });
+                        Entries.Add(c, new FpdEntry
+                        {
+                            Width = width,
+                        });
+                    }
+                    Characters.Add(c);
                 }
             }
         }
