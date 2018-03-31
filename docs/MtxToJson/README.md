@@ -82,4 +82,5 @@ The following escape sequences are supported in each string in the JSON file.
 | **{clear}**   | Erases all currently displayed characters.
 | **{color:n}** | Changes the color of the following characters to the color specified by n. n can be any number 0-65535.
 | **{/color}**  | Changes the color of the following characters to the default color.
+| **{speed:n}** | Sets the text speed to the value specified by n. Similar to wait but applies to all the following characters. n can be any number 0-65535.
 | **{wait:n}**  | Waits an amount of time specified by n before showing the following characters. n can be any number 0-65535.

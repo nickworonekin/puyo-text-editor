@@ -61,6 +61,9 @@ namespace PuyoTextEditor.Text
                     case 0xf813:
                         stringBuilder.Append("{arrow}");
                         break;
+                    case 0xf880:
+                        stringBuilder.Append($"{{speed:{reader.ReadUInt16()}}}");
+                        break;
                     case 0xf881:
                         stringBuilder.Append($"{{wait:{reader.ReadUInt16()}}}");
                         break;
@@ -108,6 +111,7 @@ namespace PuyoTextEditor.Text
                 [@"\{/color\}"] = match => "\uf801",
                 [@"\{clear\}"] = match => "\uf812",
                 [@"\{arrow\}"] = match => "\uf813",
+                [@"\{speed:(\d+)\}"] = match => "\uf880" + ((char)ushort.Parse(match.Groups[1].Value)),
                 [@"\{wait:(\d+)\}"] = match => "\uf881" + ((char)ushort.Parse(match.Groups[1].Value)),
                 [@"\n"] = match => "\ufffd",
                 [@"\\u(?<Value>[a-fA-F0-9]{4})"] = match => ((char)ushort.Parse(match.Groups["Value"].Value, NumberStyles.HexNumber)).ToString(),

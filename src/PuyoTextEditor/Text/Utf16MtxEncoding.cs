@@ -35,6 +35,9 @@ namespace PuyoTextEditor.Text
                     case '\uf813':
                         stringBuilder.Append("{arrow}");
                         break;
+                    case '\uf880':
+                        stringBuilder.Append($"{{speed:{reader.ReadUInt16()}}}");
+                        break;
                     case '\uf881':
                         stringBuilder.Append($"{{wait:{reader.ReadUInt16()}}}");
                         break;
@@ -64,6 +67,7 @@ namespace PuyoTextEditor.Text
                 [@"\{/color\}"] = match => "\uf801",
                 [@"\{clear\}"] = match => "\uf812",
                 [@"\{arrow\}"] = match => "\uf813",
+                [@"\{speed:(\d+)\}"] = match => "\uf880" + ((char)ushort.Parse(match.Groups[1].Value)),
                 [@"\{wait:(\d+)\}"] = match => "\uf881" + ((char)ushort.Parse(match.Groups[1].Value)),
                 [@"\n"] = Match => "\uf8fd",
             };
