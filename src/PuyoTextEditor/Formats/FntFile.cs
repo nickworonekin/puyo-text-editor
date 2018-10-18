@@ -53,6 +53,7 @@ namespace PuyoTextEditor.Formats
                 Width = reader.ReadInt32();
                 var characterCount = reader.ReadInt32();
                 Entries = new OrderedDictionary<char, FntEntry>(characterCount);
+                Characters = new List<char>();
                 
 
                 // The FNT fomat is slightly different between the DS version and the Wii & PSP versions.
