@@ -37,6 +37,7 @@ Use 2 for MTX files used in the following games:
 * Puyo Puyo!! Quest
 * Puyo Puyo Tetris
 * Puyo Puyo Chronicle
+* Puyo Puyo Champions/eSports
 
 When this option is set to auto, the version will be 1 if the fnt or fpd options are set, otherwise it will be 2.
 

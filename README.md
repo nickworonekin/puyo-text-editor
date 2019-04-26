@@ -9,15 +9,13 @@ The following games are supported across all platforms:
 * Puyo Puyo!! Quest
 * Puyo Puyo Tetris
 * Puyo Puyo Chronicle
+* Puyo Puyo Champions/eSports
 
 ## Usage
-Puyo Text Editor comes with two command-line apps. For usage, refer to their readme.
+Puyo Text Editor currently consists of one command-line app. For usage, refer to its readme.
 
 ### [MtxToJson](docs/MtxToJson/README.md)
 MtxToJson converts MTX files to JSON and visa-versa.
-
-### [MakeFont](docs/MakeFont/README.md)
-MakeFont creates font files for MTX files using MTX-converted JSON files.
 
 ## License
 Puyo Text Editor is licensed under the [MIT license](LICENSE.md).
