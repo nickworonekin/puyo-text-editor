@@ -25,7 +25,7 @@ namespace MtxToJson
         public string Format { get; set; }
 
         [Option("-v | --version <version>",
-            Description = "The MTX version (auto, 1, 2). Use 1 for 15th, 7, and 20th. Use 2 for Quest, Tetris, and Chronicle. Defaults to auto.")]
+            Description = "The MTX version (auto, 1, 2). Use 1 for 15th, 7, and 20th. Use 2 for Quest, Tetris, Chronicle, and Champions. Defaults to auto.")]
         [AllowedValues("auto", "1", "2")]
         public string Version { get; set; }
 
