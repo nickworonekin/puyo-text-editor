@@ -51,7 +51,7 @@ The FPD file to use. This is only required when version is 1 and fnt is not set.
 
 **--64bit**
 
-When converting to MTX and version is 2, specifies offsets are 64-bit integers. Only set this when the MTX files are being used on the Switch version of Puyo Puyo Tetris.
+When converting to MTX and version is 2, specifies offsets are 64-bit integers. Only set this when the MTX files are being used on the PC, PS4, Switch, or Xbox One version of the corresponding game. This may also be set in the JSON file, via the Has64BitOffsets property.
 
 **-o &lt;output&gt;** or **--output &lt;output&gt;**
 
