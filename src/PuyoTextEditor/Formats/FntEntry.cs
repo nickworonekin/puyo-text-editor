@@ -9,6 +9,6 @@ namespace PuyoTextEditor.Formats
         /// </summary>
         public short Width { get; set; }
 
-        public BitArray Image { get; set; }
+        public BitArray? Image { get; set; }
     }
 }

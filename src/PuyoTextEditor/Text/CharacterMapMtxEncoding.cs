@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Globalization;
+﻿using PuyoTextEditor.IO;
+using PuyoTextEditor.Properties;
+using PuyoTextEditor.Xml;
+using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
+using System.Xml.Linq;
 
 namespace PuyoTextEditor.Text
 {
@@ -29,95 +30,127 @@ namespace PuyoTextEditor.Text
             }
         }
 
-        /// <summary>
-        /// Calculates the number of bytes produced by encoding the characters in the specified string.
-        /// </summary>
-        /// <param name="s">The string containing the set of characters to encode</param>
-        /// <returns>The number of bytes produced by encoding the specified characters.</returns>
-        public override int GetByteCount(string s) => Encoding.Unicode.GetByteCount(Unescape(s)) + 2;
-
-        /// <summary>
-        /// Reads an encoded string from an MTX file.
-        /// </summary>
-        /// <param name="reader">An instance of <see cref="BinaryReader"/>.</param>
-        /// <returns>The string.</returns>
-        public override string Read(BinaryReader reader)
+        /// <inheritdoc/>
+        public override int GetByteCount(XElement element)
         {
-            var stringBuilder = new StringBuilder();
+            using var stream = new MemoryStream();
+            using var writer = new BinaryWriter(stream, Encoding.Unicode);
+
+            Write(writer, element);
+
+            return (int)stream.Length;
+        }
+
+        /// <inheritdoc/>
+        public override XElement Read(BinaryReader reader, int? count = null)
+        {
+            var builder = new TextEntryBuilder(new XElement("text"));
+
             ushort c;
             while ((c = reader.ReadUInt16()) != 0xffff)
             {
                 switch (c)
                 {
                     case 0xf800:
-                        stringBuilder.Append($"{{color:{reader.ReadUInt16()}}}");
+                        builder.Push(new XElement("color", new XAttribute("value", reader.ReadUInt16())));
                         break;
                     case 0xf801:
-                        stringBuilder.Append("{/color}");
+                        builder.Pop();
                         break;
                     case 0xf812:
-                        stringBuilder.Append("{clear}");
+                        builder.Add(new XElement("clear"));
                         break;
                     case 0xf813:
-                        stringBuilder.Append("{arrow}");
+                        builder.Add(new XElement("arrow"));
                         break;
                     case 0xf880:
-                        stringBuilder.Append($"{{speed:{reader.ReadUInt16()}}}");
+                        builder.Add(new XElement("speed", new XAttribute("value", reader.ReadUInt16())));
                         break;
                     case 0xf881:
-                        stringBuilder.Append($"{{wait:{reader.ReadUInt16()}}}");
+                        builder.Add(new XElement("wait", new XAttribute("value", reader.ReadUInt16())));
                         break;
                     case 0xfffd:
-                        stringBuilder.Append("\n");
+                        builder.Add('\n');
                         break;
+                    case 0xf8ff:
+                        throw new InvalidDataException(Resources.FpdOrFntNotRequired);
                     default:
-                        if (indexToCharDictionary.ContainsKey(c))
+                        if (indexToCharDictionary.TryGetValue(c, out var value))
                         {
-                            stringBuilder.Append(indexToCharDictionary[c]);
+                            builder.Add(value);
                         }
                         else
                         {
-                            stringBuilder.Append(@"\u" + c.ToString("x4"));
+                            throw new KeyNotFoundException(Resources.IndexNotFoundInFontFile);
                         }
                         break;
                 }
             }
 
-            return stringBuilder.ToString();
+            return builder.ToXElement();
         }
 
-        public override void Write(BinaryWriter writer, string s)
+        /// <inheritdoc/>
+        public override void Write(BinaryWriter writer, XElement element)
         {
-            foreach (var c in Unescape(s))
+            WriteElement(writer, element);
+            writer.WriteUInt16(0xffff);
+        }
+
+        private void WriteElement(BinaryWriter writer, XElement element)
+        {
+            foreach (var node in element.Nodes())
             {
-                if (charToIndexDictionary.ContainsKey(c))
+                if (node is XElement eNode)
                 {
-                    writer.Write(charToIndexDictionary[c]);
+                    switch (eNode.Name.LocalName)
+                    {
+                        case "color":
+                            writer.WriteUInt16(0xf800);
+                            writer.Write(ushort.Parse(eNode.AttributeOrThrow("value").Value));
+                            WriteElement(writer, eNode);
+                            writer.WriteUInt16(0xf801);
+                            break;
+                        case "clear":
+                            writer.WriteUInt16(0xf812);
+                            break;
+                        case "arrow":
+                            writer.WriteUInt16(0xf813);
+                            break;
+                        case "speed":
+                            writer.WriteUInt16(0xf880);
+                            writer.Write(ushort.Parse(eNode.AttributeOrThrow("value").Value));
+                            break;
+                        case "wait":
+                            writer.WriteUInt16(0xf881);
+                            writer.Write(ushort.Parse(eNode.AttributeOrThrow("value").Value));
+                            break;
+                        default:
+                            throw new InvalidDataException(string.Format(Resources.InvalidElement, eNode.Name.LocalName));
+                    }
                 }
-                else
+                else if (node is XText tNode)
                 {
-                    writer.Write(c);
+                    foreach (var c in tNode.Value)
+                    {
+                        if (c == '\n')
+                        {
+                            writer.WriteUInt16(0xfffd);
+                        }
+                        else
+                        {
+                            if (charToIndexDictionary.TryGetValue(c, out var value))
+                            {
+                                writer.Write(value);
+                            }
+                            else
+                            {
+                                throw new KeyNotFoundException(Resources.CharacterNotFoundInFontFile);
+                            }
+                        }
+                    }
                 }
             }
-
-            writer.Write('\uffff');
-        }
-
-        private static string Unescape(string s)
-        {
-            var patterns = new Dictionary<string, MatchEvaluator>
-            {
-                [@"\{color:(\d+)\}"] = match => "\uf800" + ((char)ushort.Parse(match.Groups[1].Value)),
-                [@"\{/color\}"] = match => "\uf801",
-                [@"\{clear\}"] = match => "\uf812",
-                [@"\{arrow\}"] = match => "\uf813",
-                [@"\{speed:(\d+)\}"] = match => "\uf880" + ((char)ushort.Parse(match.Groups[1].Value)),
-                [@"\{wait:(\d+)\}"] = match => "\uf881" + ((char)ushort.Parse(match.Groups[1].Value)),
-                [@"\n"] = match => "\ufffd",
-                [@"\\u(?<Value>[a-fA-F0-9]{4})"] = match => ((char)ushort.Parse(match.Groups["Value"].Value, NumberStyles.HexNumber)).ToString(),
-            };
-
-            return patterns.Aggregate(s, (current, replacement) => Regex.Replace(current, replacement.Key, replacement.Value));
         }
     }
 }

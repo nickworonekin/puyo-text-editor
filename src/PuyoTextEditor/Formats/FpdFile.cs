@@ -1,5 +1,6 @@
 ﻿using PuyoTextEditor.Collections;
-using PuyoTextEditor.Resources;
+using PuyoTextEditor.IO;
+using PuyoTextEditor.Properties;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -39,7 +40,7 @@ namespace PuyoTextEditor.Formats
                 // But their file size will always be a multiple of 3, so we can use that to check.
                 if (source.Length % 3 != 0)
                 {
-                    throw new IOException(string.Format(ErrorMessages.InvalidFpdFile, path));
+                    throw new FileFormatException(string.Format(Resources.InvalidFpdFile, path));
                 }
 
                 Entries = new OrderedDictionary<char, FpdEntry>((int)(source.Length / 3));

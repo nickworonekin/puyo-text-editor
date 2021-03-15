@@ -1,6 +1,8 @@
 ﻿using PuyoTextEditor.Collections;
-using PuyoTextEditor.Resources;
+using PuyoTextEditor.IO;
+using PuyoTextEditor.Properties;
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -86,9 +88,9 @@ namespace PuyoTextEditor.Formats
         {
         }
 
-        public FifFile(IDictionary<char, FifEntry> collection, short width, short height, short characterWidth, short characterHeight, bool isBigEndian = false)
+        public FifFile(IDictionary<char, FifEntry>? collection, short width, short height, short characterWidth, short characterHeight, bool isBigEndian = false)
         {
-            if (collection != null)
+            if (collection is not null)
             {
                 Entries = new OrderedDictionary<char, FifEntry>(collection);
             }
@@ -100,11 +102,11 @@ namespace PuyoTextEditor.Formats
             // Make sure the character width/height (with expected padding) aren't larger than the width/height
             if (characterWidth + 2 > width)
             {
-                throw new ArgumentException(string.Format(ErrorMessages.ParameterCannotBeLargerThan, nameof(characterWidth), nameof(width)));
+                throw new ArgumentException(string.Format(Resources.CannotBeLargerThan, nameof(characterWidth), nameof(width)));
             }
             if (characterHeight + 2 > height)
             {
-                throw new ArgumentException(string.Format(ErrorMessages.ParameterCannotBeLargerThan, nameof(characterHeight), nameof(height)));
+                throw new ArgumentException(string.Format(Resources.CannotBeLargerThan, nameof(characterHeight), nameof(height)));
             }
 
             Width = width;
@@ -133,7 +135,7 @@ namespace PuyoTextEditor.Formats
                 if (!(reader.ReadByte() == 'F' && reader.ReadByte() == 'O' && reader.ReadByte() == 'N' && reader.ReadByte() == 'T'
                     && reader.ReadByte() == 'D' && reader.ReadByte() == 'A' && reader.ReadByte() == 'T' && reader.ReadByte() == 'F'))
                 {
-                    throw new IOException(string.Format(ErrorMessages.InvalidFifFile + "1", path));
+                    throw new FileFormatException(string.Format(Resources.InvalidFifFile, path));
                 }
 
                 // The next 4 bytes tell us the endianess of the file.
@@ -147,9 +149,9 @@ namespace PuyoTextEditor.Formats
 
                 if (IsBigEndian)
                 {
-                    ReadChar = () => EndianConverter.Convert(reader.ReadChar());
-                    ReadInt16 = () => EndianConverter.Convert(reader.ReadInt16());
-                    ReadInt32 = () => EndianConverter.Convert(reader.ReadInt32());
+                    ReadChar = () => (char)BinaryPrimitives.ReverseEndianness(reader.ReadChar());
+                    ReadInt16 = () => BinaryPrimitives.ReverseEndianness(reader.ReadInt16());
+                    ReadInt32 = () => BinaryPrimitives.ReverseEndianness(reader.ReadInt32());
                 }
                 else
                 {
@@ -161,7 +163,7 @@ namespace PuyoTextEditor.Formats
                 // The next 16-bit integer appears to always be 101 (0x65)
                 if (ReadInt16() != 101)
                 {
-                    throw new IOException(string.Format(ErrorMessages.InvalidFifFile, path));
+                    throw new FileFormatException(string.Format(Resources.InvalidFifFile, path));
                 }
 
                 var entryTableOffset = ReadInt16(); // This is usually always 56
@@ -170,7 +172,7 @@ namespace PuyoTextEditor.Formats
                 // Check the file size and make sure it is expected size
                 if (source.Length != entryTableOffset + (entryCount * 16))
                 {
-                    throw new IOException(string.Format(ErrorMessages.InvalidFifFile, path));
+                    throw new FileFormatException(string.Format(Resources.InvalidFifFile, path));
                 }
 
                 CharactersPerTexture = ReadInt32();
@@ -189,13 +191,13 @@ namespace PuyoTextEditor.Formats
                 // The next value appears to always be equal to CharacterHeight
                 if (ReadInt16() != CharacterHeight)
                 {
-                    throw new IOException(string.Format(ErrorMessages.InvalidFifFile, path));
+                    throw new FileFormatException(string.Format(Resources.InvalidFifFile, path));
                 }
 
                 // The next two bytes appear to be 32 and 1
                 if (!(reader.ReadByte() == 32 && reader.ReadByte() == 1))
                 {
-                    throw new IOException(string.Format(ErrorMessages.InvalidFifFile, path));
+                    throw new FileFormatException(string.Format(Resources.InvalidFifFile, path));
                 }
 
                 source.Position = entryTableOffset;
@@ -214,7 +216,7 @@ namespace PuyoTextEditor.Formats
                     // If it's not equal to i, throw an exception.
                     if (index != i)
                     {
-                        throw new IOException(string.Format(ErrorMessages.InvalidFifFile, path));
+                        throw new FileFormatException(string.Format(Resources.InvalidFifFile, path));
                     }
 
                     Entries.Add(character, new FifEntry
@@ -244,9 +246,9 @@ namespace PuyoTextEditor.Formats
 
                 if (IsBigEndian)
                 {
-                    WriteChar = value => writer.Write(EndianConverter.Convert(value));
-                    WriteInt16 = value => writer.Write(EndianConverter.Convert(value));
-                    WriteInt32 = value => writer.Write(EndianConverter.Convert(value));
+                    WriteChar = value => writer.Write((char)BinaryPrimitives.ReverseEndianness(value));
+                    WriteInt16 = value => writer.Write(BinaryPrimitives.ReverseEndianness(value));
+                    WriteInt32 = value => writer.Write(BinaryPrimitives.ReverseEndianness(value));
 
                     writer.Write(1);
                 }

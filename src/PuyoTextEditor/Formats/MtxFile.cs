@@ -1,10 +1,13 @@
 ﻿using PuyoTextEditor.IO;
-using PuyoTextEditor.Resources;
+using PuyoTextEditor.Properties;
+using PuyoTextEditor.Serialization;
 using PuyoTextEditor.Text;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
+using System.Xml.Linq;
 
 namespace PuyoTextEditor.Formats
 {
@@ -20,22 +23,22 @@ namespace PuyoTextEditor.Formats
         /// <summary>
         /// Gets the collection of entries that are currently in this file.
         /// </summary>
-        public List<List<string>> Entries { get; }
+        public List<List<XElement>> Entries { get; }
 
         public MtxFile(MtxEncoding encoding, bool has64BitOffsets = false)
             : this(null, encoding, has64BitOffsets)
         {
         }
 
-        public MtxFile(IEnumerable<List<string>> collection, MtxEncoding encoding, bool has64BitOffsets = false)
+        public MtxFile(IEnumerable<List<XElement>>? collection, MtxEncoding encoding, bool has64BitOffsets = false)
         {
-            if (collection != null)
+            if (collection is not null)
             {
-                Entries = new List<List<string>>(collection);
+                Entries = new List<List<XElement>>(collection);
             }
             else
             {
-                Entries = new List<List<string>>();
+                Entries = new List<List<XElement>>();
             }
 
             this.encoding = encoding;
@@ -52,73 +55,63 @@ namespace PuyoTextEditor.Formats
                 // The first 4 bytes in an MTX file tells us its expected file size.
                 // This value is incorrect for MTX files in the 15th Anniversary translation.
                 // Those files will be identified as being invalid.
-                var length = reader.PeekInt32();
+                var length = reader.Peek(x => x.ReadInt32());
                 if (length != source.Length)
                 {
-                    throw new IOException(string.Format(ErrorMessages.InvalidMtxFile, path));
+                    throw new FileFormatException(string.Format(Resources.InvalidMtxFile, path));
                 }
 
-                Func<int> ReadInt, PeekInt;
+                Func<BinaryReader, int> ReadInt;
                 int intSize;
 
-                // In the Switch version of Puyo Puyo Tetris, offsets are stored as 64-bit integers
-                // In all other versions, they are stored as 32-bit integers.
-                // We're going to test this by reading bytes 4-8 as a 32-bit integer to see if it returns 8.
-                // If it doesn't, we'll read bytes 8-16 as a 64-bit integer to see if it returns 16.
+                // MTX files used on Switch, PS4, Xbox One, and PC store their offsets as 64-bit integers
+                // On all other platforms, they are stored as 32-bit integers.
+                // We're going to test this by reading the bytes at 0x4 as a 32-bit integer to see if it returns 8.
+                // If it doesn't, we'll read bytes at 0x8 as a 64-bit integer to see if it returns 16.
                 // If it doesn't, then throw an error.
-                source.Position += 4;
-                var testInt32 = reader.PeekInt32();
-                source.Position -= 4;
 
-                if (testInt32 == 8)
+                // This MTX file uses 32-bit offsets
+                if (reader.At(0x4, x => x.ReadInt32()) == 8)
                 {
-                    // This MTX file uses 32-bit offsets
                     Has64BitOffsets = false;
                     intSize = 4;
-                    ReadInt = reader.ReadInt32;
-                    PeekInt = reader.PeekInt32;
+                    ReadInt = x => x.ReadInt32();
                 }
+
+                // This MTX file uses 64-bit offsets
+                else if (reader.At(0x8, x => x.ReadInt64()) == 16)
+                {
+                    Has64BitOffsets = true;
+                    intSize = 8;
+                    ReadInt = x => (int)x.ReadInt64();
+                }
+
+                // Not an MTX file
                 else
                 {
-                    source.Position += 8;
-                    var testInt64 = reader.PeekInt64();
-                    source.Position -= 8;
-
-                    if (testInt64 == 16)
-                    {
-                        // This MTX file uses 64-bit offsets
-                        Has64BitOffsets = true;
-                        intSize = 8;
-                        ReadInt = () => (int)reader.ReadInt64();
-                        PeekInt = () => (int)reader.PeekInt64();
-                    }
-
-                    else
-                    {
-                        throw new IOException(string.Format(ErrorMessages.InvalidMtxFile, path));
-                    }
+                    throw new FileFormatException(string.Format(Resources.InvalidMtxFile, path));
                 }
 
                 source.Position += intSize;
-                var sectionsTablePosition = ReadInt();
-                var sectionsCount = (PeekInt() - sectionsTablePosition) / intSize;
+                var sectionsTablePosition = ReadInt(reader);
+                var sectionsCount = (reader.Peek(ReadInt) - sectionsTablePosition) / intSize;
 
-                Entries = new List<List<string>>(sectionsCount);
+                Entries = new List<List<XElement>>(sectionsCount);
                 var offsets = new Queue<int>();
 
                 for (var i = 0; i < sectionsCount; i++)
                 {
-                    var stringsTablePosition = ReadInt();
-                    var stringsCount = (PeekInt() - stringsTablePosition) / intSize; // OK to do this even if it's the last entry
+                    var stringsTablePosition = ReadInt(reader);
+                    var stringsCount = (reader.Peek(ReadInt) - stringsTablePosition) / intSize; // OK to do this even if it's the last entry
 
-                    Entries.Add(new List<string>(stringsCount));
+                    Entries.Add(new List<XElement>(stringsCount));
                 }
 
                 foreach (var section in Entries)
                 {
                     for (var i = 0; i < section.Capacity; i++)
                     {
-                        offsets.Enqueue(ReadInt());
+                        offsets.Enqueue(ReadInt(reader));
                     }
                 }
 
@@ -132,6 +125,17 @@ namespace PuyoTextEditor.Formats
                     }
                 }
             }
+        }
+
+        public MtxFile(MtxSerializable mtxSerializable, MtxEncoding encoding)
+        {
+            this.encoding = encoding;
+            Has64BitOffsets = mtxSerializable.Has64BitOffsets;
+
+            Entries = mtxSerializable.Sheets.Select(x =>
+                x.Texts.Select(x2 => new XElement("text", x2.Nodes()))
+                    .ToList())
+                .ToList();
         }
 
         /// <summary>

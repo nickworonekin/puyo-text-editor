@@ -8,12 +8,13 @@ namespace PuyoTextEditor.Collections
 {
     using System.Collections;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
 
     // This is different from the BCL's SortedDictionary in that SortedDictionary sorts by the keys'
     // values (e.g., alphabetical order), but OrderedDictionary sorts by the order in which the keys
     // were inserted into the dictionary.
 
-    public class OrderedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
+    public class OrderedDictionary<TKey, TValue> : IDictionary<TKey, TValue> where TKey : notnull
     {
         private Dictionary<TKey, TValue> _dictionary;
         private List<TKey> _keys;
@@ -137,7 +138,7 @@ namespace PuyoTextEditor.Collections
             return _dictionary.Remove(key);
         }
 
-        public bool TryGetValue(TKey key, out TValue value)
+        public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
         {
             return _dictionary.TryGetValue(key, out value);
         }

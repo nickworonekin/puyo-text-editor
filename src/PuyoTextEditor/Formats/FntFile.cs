@@ -1,5 +1,6 @@
 ﻿using PuyoTextEditor.Collections;
-using PuyoTextEditor.Resources;
+using PuyoTextEditor.IO;
+using PuyoTextEditor.Properties;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -43,10 +44,12 @@ namespace PuyoTextEditor.Formats
             using (var source = new FileStream(path, FileMode.Open, FileAccess.Read))
             using (var reader = new BinaryReader(source, Encoding.Unicode))
             {
+                var magicCode = reader.ReadBytes(4);
+
                 // FNT files start with the magic code FNT(null)
-                if (!(reader.ReadByte() == 'F' && reader.ReadByte() == 'N' && reader.ReadByte() == 'T' && reader.ReadByte() == 0))
+                if (!(magicCode[0] == 'F' && magicCode[1] == 'N' && magicCode[2] == 'T' && magicCode[3] == 0))
                 {
-                    throw new IOException(string.Format(ErrorMessages.InvalidFntFile, path));
+                    throw new FileFormatException(string.Format(Resources.InvalidFntFile, path));
                 }
 
                 Height = reader.ReadInt32();
@@ -54,9 +57,8 @@ namespace PuyoTextEditor.Formats
                 var characterCount = reader.ReadInt32();
                 Entries = new OrderedDictionary<char, FntEntry>(characterCount);
                 Characters = new List<char>();
-                
 
-                // The FNT fomat is slightly different between the DS version and the Wii & PSP versions.
+                // The FNT format is slightly different depending on the platform.
                 // It's possible to differentiate between the two by comparing the amount of characters it contains to its file size.
                 // We will also use this to determine if it's a valid FNT file.
                 if (48 + (characterCount * (4 + (Width * Height / 2))) == source.Length)
@@ -67,15 +69,21 @@ namespace PuyoTextEditor.Formats
                 }
                 else if (16 + (characterCount * 4) == source.Length)
                 {
-                    // Wii & PSP FNT files
+                    // Wii FNT files
+                    HasImages = false;
+                }
+                else if (source.Length >= 16 + (characterCount * 4) + 11
+                    && reader.At(16 + (characterCount * 4), x => Encoding.UTF8.GetString(x.ReadBytes(11)) == "MIG.00.1PSP"))
+                {
+                    // PSP FNT files
                     HasImages = false;
                 }
                 else
                 {
-                    throw new IOException(string.Format(ErrorMessages.InvalidFntFile, path));
+                    throw new FileFormatException(string.Format(Resources.InvalidFntFile, path));
                 }
 
-                while (source.Position < source.Length)
+                for (var i = 0; i < characterCount; i++)
                 {
                     var c = reader.ReadChar();
                     var width = reader.ReadInt16();
@@ -112,7 +120,7 @@ namespace PuyoTextEditor.Formats
                 }
 
                 // Make sure the Image property in entries is filled in and is of the correct length
-                if (!Entries.Values.All(x => x.Image != null && x.Image.Length == Width * Height))
+                if (!Entries.Values.All(x => x.Image is not null && x.Image.Length == Width * Height))
                 {
                     throw new Exception();
                 }
@@ -142,7 +150,7 @@ namespace PuyoTextEditor.Formats
 
                     if (HasImages)
                     {
-                        for (var i = 0; i < entry.Value.Image.Length; i += 2)
+                        for (var i = 0; i < entry.Value.Image!.Length; i += 2) // Image is known not to be null from the check above
                         {
                             var value = (byte)(((entry.Value.Image[i] ? 1 : 0) << 4) | ((entry.Value.Image[i + 1] ? 1 : 0) & 0xf));
                             writer.Write(value);

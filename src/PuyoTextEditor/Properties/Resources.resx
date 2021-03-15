@@ -117,13 +117,58 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="CouldNotDetermineOutputFormat" xml:space="preserve">
-    <value>Could not determine output format for '{0}'.</value>
+  <data name="CannotBeLargerThan" xml:space="preserve">
+    <value>'{0}' cannot be larger than '{1}'.</value>
   </data>
-  <data name="FileDoesNotExist" xml:space="preserve">
-    <value>The file '{0}' does not exist.</value>
+  <data name="CharacterNotFoundInFontFile" xml:space="preserve">
+    <value>The character '{0}' does not exist in the font file.</value>
   </data>
-  <data name="FntOrFpdOptionMustBeSet" xml:space="preserve">
-    <value>The fpd or fnt option must be set when version is 1.</value>
+  <data name="ElementAttributeNotFound" xml:space="preserve">
+    <value>Element '{0}' does not have the required attribute '{1}'.</value>
+  </data>
+  <data name="FontNotFound" xml:space="preserve">
+    <value>Could not find a font with the name '{0}'.</value>
+  </data>
+  <data name="FpdOrFntNotRequired" xml:space="preserve">
+    <value>A FNT or FPD file was used to convert this MTX file. This file must be converted without using a FNT or FPD file.</value>
+  </data>
+  <data name="FpdOrFntRequired" xml:space="preserve">
+    <value>A FNT or FPD file is required to convert this MTX file.</value>
+  </data>
+  <data name="IndexNotFoundInFontFile" xml:space="preserve">
+    <value>There is no character associated with the index '{0}' in the font file.</value>
+  </data>
+  <data name="InvalidCnvrsTextFile" xml:space="preserve">
+    <value>'{0}' is not a valid CNVRS-TEXT file.</value>
+  </data>
+  <data name="InvalidElement" xml:space="preserve">
+    <value>'{0}' is not a valid element.</value>
+  </data>
+  <data name="InvalidFifFile" xml:space="preserve">
+    <value>'{0}' is not a valid FIF file.</value>
+  </data>
+  <data name="InvalidFntFile" xml:space="preserve">
+    <value>'{0}' is not a valid FNT file. If this is a FNT file from the 3DS version of Puyo Puyo!! 20th Anniversary or from Puyo Puyo!! Quest, it should not be used to convert the MTX file.</value>
+  </data>
+  <data name="InvalidFpdFile" xml:space="preserve">
+    <value>'{0}' is not a valid FPD file.</value>
+  </data>
+  <data name="InvalidMtxFile" xml:space="preserve">
+    <value>'{0}' is not a valid MTX file.</value>
+  </data>
+  <data name="LayoutNotFound" xml:space="preserve">
+    <value>Could not find a layout with the name '{0}'.</value>
+  </data>
+  <data name="SheetNotFound" xml:space="preserve">
+    <value>Could not find a sheet with the name '{0}'.</value>
+  </data>
+  <data name="ValueNull" xml:space="preserve">
+    <value>Value cannot be null.</value>
+  </data>
+  <data name="VariableName" xml:space="preserve">
+    <value>Variable name: {0}</value>
+  </data>
+  <data name="XmlTagMismatch" xml:space="preserve">
+    <value>Opening and ending tag mismatch.</value>
   </data>
 </root>
