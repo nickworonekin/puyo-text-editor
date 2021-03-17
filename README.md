@@ -29,7 +29,7 @@ Set the FNT font file to use when converting to and from MTX files. This option 
 
 `--fpd <path>`
 
-Set the FPD font file to use when converting to and from MTX files. This option is required for MTX files used in Puyo Puyo!! 15th Anniversary and Puyo Puyo 7.
+Set the FPD font file to use when converting to and from MTX files. This option is required for MTX files used in Puyo Puyo! 15th Anniversary and Puyo Puyo 7.
 
 `-o, --output <path>`
 

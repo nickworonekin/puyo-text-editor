@@ -30,6 +30,13 @@ namespace PuyoTextEditor.Text
                 switch (c)
                 {
                     case '\uf800':
+                        // If the color element is the current element, convert it to an empty element
+                        // and move its nodes to its parent element.
+                        if (builder.Current.Name.LocalName == "color")
+                        {
+                            builder.ReplaceWithAdd();
+                        }
+
                         builder.Push(new XElement("color", new XAttribute("value", reader.ReadUInt16())));
                         break;
                     case '\uf801':
@@ -58,6 +65,13 @@ namespace PuyoTextEditor.Text
                 }
             }
 
+            // If the color element is the current element, convert it to an empty element
+            // and move its nodes to its parent element.
+            if (builder.Current.Name.LocalName == "color")
+            {
+                builder.ReplaceWithAdd();
+            }
+
             return builder.ToXElement();
         }
 
@@ -79,8 +93,13 @@ namespace PuyoTextEditor.Text
                         case "color":
                             writer.Write('\uf800');
                             writer.Write(ushort.Parse(eNode.AttributeOrThrow("value").Value));
-                            WriteElement(writer, eNode);
-                            writer.Write('\uf801');
+
+                            // Only write the content and end tag if it's not an empty element.
+                            if (!eNode.IsEmpty)
+                            {
+                                WriteElement(writer, eNode);
+                                writer.Write('\uf801');
+                            }
                             break;
                         case "clear":
                             writer.Write('\uf812');
