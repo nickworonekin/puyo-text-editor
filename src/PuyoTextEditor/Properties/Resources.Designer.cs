@@ -178,6 +178,15 @@ namespace PuyoTextEditor.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &apos;{0}&apos; is not a valid sheet name..
+        /// </summary>
+        internal static string InvalidSheetName {
+            get {
+                return ResourceManager.GetString("InvalidSheetName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Could not find a layout with the name &apos;{0}&apos;..
         /// </summary>
         internal static string LayoutNotFound {

@@ -156,6 +156,9 @@
   <data name="InvalidMtxFile" xml:space="preserve">
     <value>'{0}' is not a valid MTX file.</value>
   </data>
+  <data name="InvalidSheetName" xml:space="preserve">
+    <value>'{0}' is not a valid sheet name.</value>
+  </data>
   <data name="LayoutNotFound" xml:space="preserve">
     <value>Could not find a layout with the name '{0}'.</value>
   </data>

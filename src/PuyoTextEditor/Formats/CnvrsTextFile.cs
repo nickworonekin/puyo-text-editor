@@ -17,6 +17,20 @@ namespace PuyoTextEditor.Formats
     {
         private readonly CnvrsTextEncoding encoding = new CnvrsTextEncoding();
 
+        private static Dictionary<string, byte> languageCodes = new Dictionary<string, byte>
+        {
+            ["de"] = 0,
+            ["en"] = 1,
+            ["en(Rough)"] = 2, // This is never used but is a valid language code.
+            ["es"] = 3,
+            ["fr"] = 4,
+            ["it"] = 5,
+            ["ja"] = 6,
+            ["ko"] = 7,
+            ["zh"] = 8,
+            ["zhs"] = 9,
+        };
+
         /// <summary>
         /// Gets the collection of sheets that are currently in this file.
         /// </summary>
@@ -187,6 +201,11 @@ namespace PuyoTextEditor.Formats
                 // Sheet entry table
                 foreach (var (name, sheet) in Sheets)
                 {
+                    if (!languageCodes.ContainsKey(name))
+                    {
+                        throw new KeyNotFoundException(string.Format(Resources.InvalidSheetName, name));
+                    }
+
                     var sheetNode = new SheetNode
                     {
                         EntryPosition = destination.Position,
@@ -194,7 +213,7 @@ namespace PuyoTextEditor.Formats
                     sheetNodes.Add(name, sheetNode);
 
                     writer.WriteByte(6);
-                    writer.WriteByte(1);
+                    writer.WriteByte(languageCodes[name]);
                     writer.WriteInt16((short)sheet.Count);
                     writer.WriteInt32(0); // 4 null bytes
                     writeOffset(0); // Primary entry offset (filled in later)
