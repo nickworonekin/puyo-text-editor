@@ -17,7 +17,7 @@ namespace PuyoTextEditor.Formats
     {
         private readonly CnvrsTextEncoding encoding = new CnvrsTextEncoding();
 
-        private static Dictionary<string, byte> languageCodes = new Dictionary<string, byte>
+        private static readonly Dictionary<string, byte> languageCodes = new Dictionary<string, byte>
         {
             ["de"] = 0,
             ["en"] = 1,

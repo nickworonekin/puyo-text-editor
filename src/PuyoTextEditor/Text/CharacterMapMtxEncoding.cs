@@ -88,7 +88,7 @@ namespace PuyoTextEditor.Text
                         }
                         else
                         {
-                            throw new KeyNotFoundException(Resources.IndexNotFoundInFontFile);
+                            throw new KeyNotFoundException(string.Format(Resources.IndexNotFoundInFontFile, c));
                         }
                         break;
                 }
@@ -164,7 +164,7 @@ namespace PuyoTextEditor.Text
                             }
                             else
                             {
-                                throw new KeyNotFoundException(Resources.CharacterNotFoundInFontFile);
+                                throw new KeyNotFoundException(string.Format(Resources.CharacterNotFoundInFontFile, c));
                             }
                         }
                     }

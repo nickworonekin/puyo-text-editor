@@ -67,7 +67,8 @@ namespace PuyoTextEditor.Formats
                     HasImages = true;
                     source.Position += 32;
                 }
-                else if (16 + (characterCount * 4) == source.Length)
+                else if (source.Length >= 16 + (characterCount * 4) + 4
+                    && reader.At(16 + (characterCount * 4), x => new string[] { "GCIX", "GVRT" }.Contains(Encoding.UTF8.GetString(x.ReadBytes(4)))))
                 {
                     // Wii FNT files
                     HasImages = false;
