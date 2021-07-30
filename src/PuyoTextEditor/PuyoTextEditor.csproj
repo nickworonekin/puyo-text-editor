@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <Description>Modify text in various Puyo Puyo games.</Description>
     <Copyright>Copyright © Nick Woronekin 2021</Copyright>
-    <Version>2.0.3</Version>
+    <Version>2.0.4</Version>
   </PropertyGroup>
 
   <ItemGroup>
