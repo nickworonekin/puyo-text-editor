@@ -35,7 +35,9 @@ namespace PuyoTextEditor.Xml
 
             if (currentElement.Parent is null)
             {
-                throw new InvalidOperationException(Resources.XmlTagMismatch);
+                // This can occur in valid MTX files.
+                // In this case, don't pop the current element.
+                return currentElement;
             }
 
             var element = currentElement;
@@ -64,6 +66,14 @@ namespace PuyoTextEditor.Xml
         public void ReplaceWithAdd()
         {
             var element = Pop();
+
+            // If the popped element is the current element, then do nothing.
+            // This can happen if the current element is the root element.
+            if (element == currentElement)
+            {
+                return;
+            }
+
             element.Remove();
 
             var nodes = element.Nodes().ToList();
