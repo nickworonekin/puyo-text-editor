@@ -76,6 +76,15 @@ namespace PuyoTextEditor.Text
                     case 0xf881:
                         builder.Add(new XElement("wait", new XAttribute("value", reader.ReadUInt16())));
                         break;
+                    case 0xf884:
+                        builder.Add(new XElement("tutorialCourse"));
+                        break;
+                    case 0xf885:
+                        builder.Add(new XElement("tutorialLevel"));
+                        break;
+                    case 0xf886:
+                        builder.Add(new XElement("tutorialQuestion"));
+                        break;
                     case 0xfffd:
                         builder.Add('\n');
                         break;
@@ -143,6 +152,15 @@ namespace PuyoTextEditor.Text
                         case "wait":
                             writer.WriteUInt16(0xf881);
                             writer.Write(ushort.Parse(eNode.AttributeOrThrow("value").Value));
+                            break;
+                        case "tutorialCourse":
+                            writer.WriteUInt16(0xf884);
+                            break;
+                        case "tutorialLevel":
+                            writer.WriteUInt16(0xf885);
+                            break;
+                        case "tutorialQuestion":
+                            writer.WriteUInt16(0xf886);
                             break;
                         default:
                             throw new InvalidDataException(string.Format(Resources.InvalidElement, eNode.Name.LocalName));
