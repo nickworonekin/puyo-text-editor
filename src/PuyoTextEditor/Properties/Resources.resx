@@ -121,7 +121,7 @@
     <value>'{0}' cannot be larger than '{1}'.</value>
   </data>
   <data name="CharacterNotFoundInFontFile" xml:space="preserve">
-    <value>The character '{0}' does not exist in the font file.</value>
+    <value>The character '{0}' (U+{1:X4}) does not exist in the font file.</value>
   </data>
   <data name="ElementAttributeNotFound" xml:space="preserve">
     <value>Element '{0}' does not have the required attribute '{1}'.</value>

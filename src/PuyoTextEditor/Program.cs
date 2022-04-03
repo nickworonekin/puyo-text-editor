@@ -4,7 +4,10 @@ using PuyoTextEditor.Text;
 using System;
 using System.Collections.Generic;
 using System.CommandLine;
+using System.CommandLine.Builder;
 using System.CommandLine.Invocation;
+using System.CommandLine.NamingConventionBinder;
+using System.CommandLine.Parsing;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -29,34 +32,33 @@ namespace PuyoTextEditor
                 }
                     .ExistingOnly(),
             };
-            rootCommand.Handler = CommandHandler.Create<RootCommandOptions, IConsole>((options, console) => InvokeCommand(Convert, options, console));
+            rootCommand.Handler = CommandHandler.Create<RootCommandOptions>(Convert);
 
-            return await rootCommand.InvokeAsync(args);
+            var parser = new CommandLineBuilder(rootCommand)
+                .UseDefaults()
+                .UseExceptionHandler(ExceptionHandler)
+                .Build();
+
+            return await parser.InvokeAsync(args);
         }
 
-        static int InvokeCommand<T>(Action<T> action, T options, IConsole? console = null)
+        static void ExceptionHandler(Exception e, InvocationContext context)
         {
-            try
+            if (e is System.Reflection.TargetInvocationException
+                && e.InnerException is not null)
             {
-                action(options);
-
-                return 0;
+                e = e.InnerException;
             }
-            catch (Exception e)
-            {
-                if (console is not null)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
+
+            Console.ForegroundColor = ConsoleColor.Red;
 #if DEBUG
-                    console.Error.Write(e + Environment.NewLine);
+            Console.Error.WriteLine(e);
 #else
-                    console.Error.Write(e.Message + Environment.NewLine);
+            Console.Error.WriteLine(e.Message);
 #endif
-                    Console.ResetColor();
-                }
+            Console.ResetColor();
 
-                return e.HResult;
-            }
+            context.ExitCode = e.HResult;
         }
 
         static void Convert(RootCommandOptions options)

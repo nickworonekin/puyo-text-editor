@@ -88,6 +88,9 @@ namespace PuyoTextEditor.Text
                     case 0xfffd:
                         builder.Add('\n');
                         break;
+                    case 0xfffe:
+                        builder.Add(new XElement("r"));
+                        break;
                     case 0xf8ff:
                         throw new InvalidDataException(Resources.FpdOrFntNotRequired);
                     default:
@@ -162,6 +165,9 @@ namespace PuyoTextEditor.Text
                         case "tutorialQuestion":
                             writer.WriteUInt16(0xf886);
                             break;
+                        case "r":
+                            writer.WriteUInt16(0xfffe);
+                            break;
                         default:
                             throw new InvalidDataException(string.Format(Resources.InvalidElement, eNode.Name.LocalName));
                     }
@@ -182,7 +188,7 @@ namespace PuyoTextEditor.Text
                             }
                             else
                             {
-                                throw new KeyNotFoundException(string.Format(Resources.CharacterNotFoundInFontFile, c));
+                                throw new KeyNotFoundException(string.Format(Resources.CharacterNotFoundInFontFile, c, (ushort)c));
                             }
                         }
                     }
