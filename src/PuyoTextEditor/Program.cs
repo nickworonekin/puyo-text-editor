@@ -9,7 +9,9 @@ using System.CommandLine.Invocation;
 using System.CommandLine.NamingConventionBinder;
 using System.CommandLine.Parsing;
 using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace PuyoTextEditor
 {
@@ -44,8 +46,17 @@ namespace PuyoTextEditor
 
         static void ExceptionHandler(Exception e, InvocationContext context)
         {
-            if (e is System.Reflection.TargetInvocationException
+            // If the exception is a TargetInvocationException, use the underlying exception.
+            if (e is TargetInvocationException
                 && e.InnerException is not null)
+            {
+                e = e.InnerException;
+            }
+
+            // If the exception is an InvalidOperationException due to an XmlException,
+            // use the XmlException as its error message is more descriptive.
+            if (e is InvalidOperationException
+                && e.InnerException is XmlException)
             {
                 e = e.InnerException;
             }
