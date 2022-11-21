@@ -24,5 +24,11 @@ namespace PuyoTextEditor.Formats
         /// </summary>
         [XmlEnum("right")]
         Right = 2,
+
+        /// <summary>
+        /// This is currently unknown. (first appeared in Sonic Frontiers)
+        /// </summary>
+        [XmlEnum("unknown")]
+        Unknown = 3,
     }
 }
