@@ -26,9 +26,9 @@ namespace PuyoTextEditor.Formats
         Right = 2,
 
         /// <summary>
-        /// This is currently unknown. (first appeared in Sonic Frontiers)
+        /// When single-lined, text is centered. When multi-lined, text is aligned to the left.
         /// </summary>
-        [XmlEnum("unknown")]
-        Unknown = 3,
+        [XmlEnum("centerLeft")]
+        CenterLeft = 3,
     }
 }

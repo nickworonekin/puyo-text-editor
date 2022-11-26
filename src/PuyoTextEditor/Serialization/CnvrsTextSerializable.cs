@@ -22,7 +22,8 @@ namespace PuyoTextEditor.Serialization
             Sheets = cnvrsTextFile.Sheets.Select(x => new Sheet
             {
                 Name = x.Key,
-                Texts = x.Value.Select(x2 => CreateTextElement(x2.Key, x2.Value))
+                Index = x.Value.Id,
+                Texts = x.Value.Entries.Select(x2 => CreateTextElement(x2.Key, x2.Value))
                     .ToList(),
             }).ToList();
 
@@ -87,6 +88,20 @@ namespace PuyoTextEditor.Serialization
         {
             [XmlAttribute("name")]
             public string Name { get; set; } = default!;
+
+            [XmlIgnore]
+            public byte? Index { get; set; }
+
+            [XmlAttribute("index")]
+            public string? IndexSerialized
+            {
+                get => Index?.ToString();
+                set => Index = value is not null
+                    ? byte.Parse(value)
+                    : null;
+            }
+
+            public bool ShouldSerializeIndexSerialized() => Index.HasValue;
         }
 
         public class Font

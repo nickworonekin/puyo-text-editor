@@ -6,14 +6,14 @@
 	<RollForward>Major</RollForward>
     <SatelliteResourceLanguages>en-US</SatelliteResourceLanguages>
     <Nullable>enable</Nullable>
-    <Description>Modify text in various Puyo Puyo games.</Description>
-    <Copyright>Copyright © Nick Woronekin 2021</Copyright>
+    <Description>Modify text in various Puyo Puyo and Hedgehog Engine 2-based games.</Description>
+    <Copyright>Copyright © Nick Woronekin 2022</Copyright>
     <Version>2.0.5</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.CommandLine" Version="2.0.0-beta3.22114.1" />
-    <PackageReference Include="System.CommandLine.NamingConventionBinder" Version="2.0.0-beta3.22114.1" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+    <PackageReference Include="System.CommandLine.NamingConventionBinder" Version="2.0.0-beta4.22272.1" />
   </ItemGroup>
 
   <ItemGroup>

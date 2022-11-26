@@ -19,7 +19,7 @@ namespace PuyoTextEditor
     {
         static async Task<int> Main(string[] args)
         {
-            var rootCommand = new RootCommand("Modify text in various Puyo Puyo games.")
+            var rootCommand = new RootCommand("Modify text in various Puyo Puyo and Hedgehog Engine 2-based games.")
             {
                 new Option<string>(new string[] { "-f", "--format" }, "Set the text format. If not set, it will be determined by the file extension."),
                 new Option<FileInfo>("--fpd", "Set the FPD font file when converting to and from MTX files.")

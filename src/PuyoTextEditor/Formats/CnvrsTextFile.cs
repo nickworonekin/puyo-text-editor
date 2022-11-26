@@ -34,7 +34,7 @@ namespace PuyoTextEditor.Formats
         /// <summary>
         /// Gets the collection of sheets that are currently in this file.
         /// </summary>
-        public Dictionary<string, Dictionary<string, CnvrsTextEntry>> Sheets { get; } = new Dictionary<string, Dictionary<string, CnvrsTextEntry>>();
+        public Dictionary<string, CnvrsTextSheetEntry> Sheets { get; } = new Dictionary<string, CnvrsTextSheetEntry>();
 
         /// <summary>
         /// Gets the collection of fonts that are currently in this file.
@@ -66,12 +66,16 @@ namespace PuyoTextEditor.Formats
                 }
 
                 // We're under the assumption that there will only be one sheet per file.
-                source.Position = 0x10 + 0x32;
+                source.Position = 0x10 + 0x31;
+                var sheetId = reader.ReadByte();
                 var textStringsCount = reader.ReadInt16();
 
                 source.Position = 0x10 + 0x40;
                 var sheetName = ReadValueAtOffsetOrThrow(reader, x => x.ReadNullTerminatedString());
-                var sheet = new Dictionary<string, CnvrsTextEntry>(textStringsCount);
+                var sheet = new CnvrsTextSheetEntry(textStringsCount)
+                {
+                    Id = sheetId,
+                };
                 Sheets.Add(sheetName, sheet);
 
                 for (var i = 0; i < textStringsCount; i++)
@@ -106,7 +110,7 @@ namespace PuyoTextEditor.Formats
                         entryLayoutName = ReadLayout(reader, entryLayoutEntryOffset + 64);
                     }
 
-                    sheet.Add(entryName, new CnvrsTextEntry
+                    sheet.Entries.Add(entryName, new CnvrsTextEntry
                     {
                         Id = entryUuid,
                         Text = entryText,
@@ -125,15 +129,19 @@ namespace PuyoTextEditor.Formats
         {
             Sheets = cnvrsTextSerializable.Sheets.ToDictionary(
                 k => k.Name,
-                v => v.Texts.ToDictionary(
-                    k2 => k2.AttributeOrThrow("name").Value,
-                    v2 => new CnvrsTextEntry
-                    {
-                        Id = ulong.Parse(v2.AttributeOrThrow("id").Value),
-                        FontName = v2.Attribute("font")?.Value,
-                        LayoutName = v2.Attribute("layout")?.Value,
-                        Text = new XElement("text", v2.Nodes()),
-                    }));
+                v => new CnvrsTextSheetEntry
+                {
+                    Id = v.Index,
+                    Entries = v.Texts.ToDictionary(
+                        k2 => k2.AttributeOrThrow("name").Value,
+                        v2 => new CnvrsTextEntry
+                        {
+                            Id = ulong.Parse(v2.AttributeOrThrow("id").Value),
+                            FontName = v2.Attribute("font")?.Value,
+                            LayoutName = v2.Attribute("layout")?.Value,
+                            Text = new XElement("text", v2.Nodes()),
+                        })
+                });
 
             Fonts = cnvrsTextSerializable.Fonts.ToDictionary(
                 k => k.Name,
@@ -201,9 +209,14 @@ namespace PuyoTextEditor.Formats
                 // Sheet entry table
                 foreach (var (name, sheet) in Sheets)
                 {
-                    if (!languageCodes.ContainsKey(name))
+                    if (sheet.Id is null)
                     {
-                        throw new KeyNotFoundException(string.Format(Resources.InvalidSheetName, name));
+                        if (!languageCodes.TryGetValue(name, out var sheetId))
+                        {
+                            throw new KeyNotFoundException(string.Format(Resources.InvalidSheetName, name));
+                        }
+
+                        sheet.Id = sheetId;
                     }
 
                     var sheetNode = new SheetNode
@@ -213,8 +226,8 @@ namespace PuyoTextEditor.Formats
                     sheetNodes.Add(name, sheetNode);
 
                     writer.WriteByte(6);
-                    writer.WriteByte(languageCodes[name]);
-                    writer.WriteInt16((short)sheet.Count);
+                    writer.WriteByte(sheet.Id.Value);
+                    writer.WriteInt16((short)sheet.Entries.Count);
                     writer.WriteInt32(0); // 4 null bytes
                     writeOffset(0); // Primary entry offset (filled in later)
                     writeOffset(0); // Sheet name offset (filled in later)
@@ -227,7 +240,7 @@ namespace PuyoTextEditor.Formats
                     var sheetNode = sheetNodes[sheetName];
                     sheetNode.TextNodeStartPosition = destination.Position;
 
-                    foreach (var (textName, text) in sheet)
+                    foreach (var (textName, text) in sheet.Entries)
                     {
                         var textNode = new TextNode
                         {
@@ -249,7 +262,7 @@ namespace PuyoTextEditor.Formats
                 {
                     var sheetNode = sheetNodes[sheetName];
 
-                    foreach (var (textName, text) in sheet)
+                    foreach (var (textName, text) in sheet.Entries)
                     {
                         var textNode = sheetNode.TextNodes[textName];
                         textNode.TextPosition = destination.Position;
@@ -266,7 +279,7 @@ namespace PuyoTextEditor.Formats
                 {
                     var sheetNode = sheetNodes[sheetName];
 
-                    foreach (var textName in texts.Keys)
+                    foreach (var textName in texts.Entries.Keys)
                     {
                         var textNode = sheetNode.TextNodes[textName];
                         textNode.SecondaryEntryPosition = destination.Position;
@@ -419,7 +432,7 @@ namespace PuyoTextEditor.Formats
                         writer.WriteNullTerminatedString(sheetName);
                     }
 
-                    foreach (var textName in sheet.Keys)
+                    foreach (var textName in sheet.Entries.Keys)
                     {
                         if (!nameOffsets.ContainsKey(textName))
                         {
@@ -498,8 +511,8 @@ namespace PuyoTextEditor.Formats
 
                     foreach (var (textName, textNode) in sheetNode.TextNodes)
                     {
-                        var fontName = Sheets[sheetName][textName].FontName;
-                        var layoutName = Sheets[sheetName][textName].LayoutName;
+                        var fontName = Sheets[sheetName].Entries[textName].FontName;
+                        var layoutName = Sheets[sheetName].Entries[textName].LayoutName;
 
                         destination.Position = textNode.EntryPosition + 0x8;
                         writer.WriteInt64(nameOffsets[textName] - 64);
