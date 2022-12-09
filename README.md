@@ -1,5 +1,5 @@
 # Puyo Text Editor
-Puyo Text Editor allows you to modify text in various Puyo Puyo games by converting the various text files to XML and visa-versa. The resulting XML files can be edited in your favorite text editor.
+Puyo Text Editor allows you to modify text in various Puyo Puyo and Hedgehog Engine 2-based games by converting the various text files to XML and visa-versa. The resulting XML files can be edited in your favorite text editor.
 
 ## Requirements
 * [.NET 5.0+ Runtime](https://dotnet.microsoft.com/download)
@@ -51,6 +51,8 @@ The following games are supported across all platforms:
 * Puyo Puyo Chronicle
 * Puyo Puyo Champions
 * Puyo Puyo Tetris 2
+* Sonic Origins
+* Sonic Frontiers
 
 ## License
 Puyo Text Editor is licensed under the [MIT license](LICENSE.md).
