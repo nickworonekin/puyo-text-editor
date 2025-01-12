@@ -52,21 +52,40 @@ namespace PuyoTextEditor.Serialization
 
         private XElement CreateTextElement(string name, CnvrsTextEntry entry)
         {
-            var element = new XElement("text",
-                new XAttribute("name", name),
-                new XAttribute("id", entry.Id));
+            // Create the root element <textEntry> with attributes
+            var root = new XElement("textEntry",
+                new XAttribute("name", name));
+
             if (entry.FontName is not null)
             {
-                element.Add(new XAttribute("font", entry.FontName));
+                root.Add(new XAttribute("font", entry.FontName));
             }
             if (entry.LayoutName is not null)
             {
-                element.Add(new XAttribute("layout", entry.LayoutName));
+                root.Add(new XAttribute("layout", entry.LayoutName));
             }
 
-            element.Add(entry.Text.Nodes());
+            // Create the <text> child element and add the content
+            var textElement = new XElement("text", entry.Text.Nodes());
+            root.Add(textElement);
+            
 
-            return element;
+            // Create the <speakers> child element
+            if (entry.Parameters != null && entry.Parameters.Any())
+            {
+                var speakersElement = new XElement("parameters");
+
+                // Add each speaker as a <speaker> element with the name attribute
+                foreach (var speaker in entry.Parameters)
+                {
+                    speakersElement.Add(new XElement("parameter", new XAttribute("key", speaker.Key), new XAttribute("value", speaker.Value), new XAttribute("unknown", speaker.Unknown)));
+                }
+
+                root.Add(speakersElement);
+            }
+
+
+            return root;
         }
 
         [XmlElement("sheet")]

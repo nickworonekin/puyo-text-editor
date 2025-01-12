@@ -82,13 +82,18 @@ namespace PuyoTextEditor.Formats
                 {
                     source.Position = 0x10 + 0x50 + (i * 0x30);
 
-                    var entryUuid = reader.ReadUInt64();
+                    reader.ReadUInt64(); //Skip entry name hash.
                     var entryNameOffset = reader.ReadInt64() + 64;
                     var secondaryEntryOffset = reader.ReadInt64() + 64;
                     var textOffset = reader.ReadInt64() + 64;
                     var textLength = (int)reader.ReadInt64();
 
+                    var parametersOffset = reader.ReadInt64();
+
                     var entryName = reader.At(entryNameOffset, x => x.ReadNullTerminatedString());
+
+                    var entryNameHash = ComputeHash(entryName);
+
                     var entryText = reader.At(textOffset, x => encoding.Read(x, textLength));
 
                     source.Position = secondaryEntryOffset;
@@ -110,12 +115,19 @@ namespace PuyoTextEditor.Formats
                         entryLayoutName = ReadLayout(reader, entryLayoutEntryOffset + 64);
                     }
 
+                    List<CnvrsParameterEntry> parameters = new();
+
+                    if (parametersOffset != 0)
+                    {
+                        parameters = ReadParameters(reader, parametersOffset);
+                    }
+
                     sheet.Entries.Add(entryName, new CnvrsTextEntry
                     {
-                        Id = entryUuid,
                         Text = entryText,
                         FontName = entryFontName,
                         LayoutName = entryLayoutName,
+                        Parameters = parameters
                     });
                 }
             }
@@ -136,11 +148,18 @@ namespace PuyoTextEditor.Formats
                         k2 => k2.AttributeOrThrow("name").Value,
                         v2 => new CnvrsTextEntry
                         {
-                            Id = ulong.Parse(v2.AttributeOrThrow("id").Value),
                             FontName = v2.Attribute("font")?.Value,
                             LayoutName = v2.Attribute("layout")?.Value,
-                            Text = new XElement("text", v2.Nodes()),
-                        })
+                            Text = new XElement("text", v2.Element("text")?.Nodes()),
+                            Parameters = v2.Element("parameters")?.Elements("parameter")
+                                .Select(paramElement => new CnvrsParameterEntry
+                                {
+                                    Unknown = ulong.Parse(paramElement.AttributeOrThrow("unknown").Value),
+                                    Key = paramElement.AttributeOrThrow("key").Value,
+                                    Value = paramElement.AttributeOrThrow("value").Value,
+                                })
+                                .ToList() ?? new List<CnvrsParameterEntry>()
+                                })
                 });
 
             Fonts = cnvrsTextSerializable.Fonts.ToDictionary(
@@ -248,12 +267,12 @@ namespace PuyoTextEditor.Formats
                         };
                         sheetNode.TextNodes.Add(textName, textNode);
 
-                        writer.WriteUInt64(text.Id);
+                        writer.WriteUInt64(ComputeHash(textName));
                         writeOffset(0); // Entry name offset (filled in later)
                         writeOffset(0); // Secondary entry offset (filled in later)
                         writeOffset(0); // Text string offset (filled in later)
                         writer.WriteInt64(encoding.GetByteCount(text.Text) / 2); // Length of text string in characters
-                        writer.WriteInt64(0); // 8 null bytes
+                        writeOffset(0); // Parameter list offset (filled in later)
                     }
                 }
 
@@ -422,6 +441,44 @@ namespace PuyoTextEditor.Formats
                     writer.WriteInt32(0); // May not be needed
                 }
 
+                //Parameter pointer list headers
+                foreach (var (sheetName, sheet) in Sheets)
+                {
+                    var sheetNode = sheetNodes[sheetName];
+                    foreach (var (textName, text) in sheet.Entries)
+                    {
+                        if (text.Parameters.Count > 0)
+                        {
+                            var textNode = sheetNode.TextNodes[textName];
+                            textNode.ParameterNodeStartPosition = destination.Position;
+                            writer.WriteInt64(text.Parameters.Count);
+                            writeOffset(0); // Parameter list offset (filled in later)
+
+                            // Parameter pointer list entries
+                            textNode.ParameterListStartPosition = destination.Position;
+                            foreach (var parameter in text.Parameters)
+                            {
+                                writeOffset(0); // Parameter data pointer
+                            }
+
+                            // Parameter data entries
+                            for (int i = 0; i < text.Parameters.Count; i++)
+                            {
+                                var parameter = text.Parameters[i];
+                                var parameterNode = new ParameterNode
+                                {
+                                    EntryPosition = destination.Position,
+                                };
+                                textNode.ParameterNodes.Add(i, parameterNode);
+
+                                writeOffset(0); // Key string offset (filled in later)
+                                writer.WriteUInt64(parameter.Unknown);
+                                writeOffset(0); // Value string offset (filled in later)
+                            }
+                        }
+                    }
+                }
+
                 // Name entries
                 var nameEntryPosition = destination.Position;
                 foreach (var (sheetName, sheet) in Sheets)
@@ -439,6 +496,25 @@ namespace PuyoTextEditor.Formats
                             nameOffsets.Add(textName, destination.Position);
                             writer.WriteNullTerminatedString(textName);
                         }
+                    }
+
+                    foreach (var textName in sheet.Entries.Keys)
+                    {
+                        var entry = sheet.Entries[textName];
+                        foreach(var parameter in entry.Parameters)
+                        {
+                            if (!nameOffsets.ContainsKey(parameter.Key))
+                            {
+                                nameOffsets.Add(parameter.Key, destination.Position);
+                                writer.WriteNullTerminatedString(parameter.Key);
+                            }
+                            if (!nameOffsets.ContainsKey(parameter.Value))
+                            {
+                                nameOffsets.Add(parameter.Value, destination.Position);
+                                writer.WriteNullTerminatedString(parameter.Value);
+                            }
+                        }
+
                     }
                 }
                 foreach (var (name, font) in Fonts)
@@ -519,6 +595,10 @@ namespace PuyoTextEditor.Formats
                         writer.WriteInt64(textNode.SecondaryEntryPosition - 64);
                         writer.WriteInt64(textNode.TextPosition - 64);
 
+                        destination.Position = textNode.EntryPosition + 0x28;
+                        
+                        writer.WriteInt64(textNode.ParameterNodes.Any() ? textNode.ParameterNodeStartPosition - 64 : 0);
+
                         destination.Position = textNode.SecondaryEntryPosition;
                         writer.WriteInt64(nameOffsets[textName] - 64);
                         writer.WriteInt64(fontName is not null
@@ -545,8 +625,89 @@ namespace PuyoTextEditor.Formats
                     writer.WriteInt64(nameOffsets[name] - 64);
                 }
 
+                foreach (var (sheetName, sheetNode) in sheetNodes)
+                {
+                    foreach (var (textName, textNode) in sheetNode.TextNodes)
+                    {
+                        if (textNode.ParameterNodes.Count > 0)
+                        {
+                            var textEntry = Sheets[sheetName].Entries[textName];
+                            destination.Position = textNode.ParameterNodeStartPosition + 0x8;
+                            writer.WriteInt64(textNode.ParameterListStartPosition - 64);
+
+                            destination.Position = textNode.ParameterListStartPosition;
+                            foreach(var (paramIndex, paramNode) in textNode.ParameterNodes)
+                            {
+                                writer.WriteInt64(paramNode.EntryPosition - 64);
+                            }
+                            foreach (var (paramIndex, paramNode) in textNode.ParameterNodes)
+                            {
+                                destination.Position = paramNode.EntryPosition;
+                                writer.WriteInt64(nameOffsets[textEntry.Parameters[paramIndex].Key] - 64);
+                                destination.Position = paramNode.EntryPosition + 0x10;
+                                writer.WriteInt64(nameOffsets[textEntry.Parameters[paramIndex].Value] - 64);
+                            }
+                        }
+                    }
+                }
+
                 destination.Seek(0, SeekOrigin.End);
             }
+        }
+
+        /// <summary>
+        /// Computes and returns the hash of the given string. By ik_01 on Hedgehog Engine Modding Server.
+        /// </summary>
+        /// <param name="name">String to hash</param>
+        /// <returns>The hash of the given string</returns>
+        static uint ComputeHash(string name)
+        {
+            uint hash = 0u;
+            for (int i = 0; i < name.Length; i++)
+            {
+                hash = hash * 0x7f + name[i];
+            }
+            return hash;
+        }
+
+        /// <summary>
+        /// Reads the parameters from the text entry. Based on the work by Ashrindy: 
+        /// https://github.com/Ashrindy/AshDumpLib/blob/6de90cf710c95e148ba9c9becb0cf43ef4c76d66/AshDumpLib/HedgehogEngine/BINA/Converse/Text.cs#L122
+        /// </summary>
+        /// <param name="reader">The reader</param>
+        /// <param name="position">The position of the parameter list header node</param>
+        /// <returns>List of parameters for this text entry</returns>
+        private List<CnvrsParameterEntry> ReadParameters(BinaryReader reader, long position)
+        {
+            List<CnvrsParameterEntry> parameters = new();
+            reader.BaseStream.Position = position + 64;
+            var paramCount = reader.ReadInt64();
+            var paramListPtr = reader.ReadInt64() + 64;
+            reader.BaseStream.Position = paramListPtr;
+
+            //For every parameter
+            for (int paramIdx = 0; paramIdx < paramCount; paramIdx++)
+            {
+                //We read the data pointer and jump to it
+                var currParamPtr = reader.ReadInt64() + 64;
+                var lastPosition = reader.BaseStream.Position;
+                reader.BaseStream.Position = currParamPtr;
+
+                string paramKey = ReadValueAtOffsetOrThrow(reader, x => x.ReadNullTerminatedString());
+                ulong paramUnknown = reader.ReadUInt64();
+                string paramValue = ReadValueAtOffsetOrThrow(reader, x => x.ReadNullTerminatedString());
+                CnvrsParameterEntry param = new()
+                {
+                    Unknown = paramUnknown,
+                    Value = paramValue,
+                    Key = paramKey
+                };
+                parameters.Add(param);
+
+                reader.BaseStream.Position = lastPosition;
+            }
+
+            return parameters;
         }
 
         private string ReadFont(BinaryReader reader, long position)
@@ -678,7 +839,16 @@ namespace PuyoTextEditor.Formats
             public long EntryPosition;
             public long SecondaryEntryPosition;
             public long TextPosition;
+            public long ParameterNodeStartPosition;
+            public long ParameterListStartPosition;
+            public Dictionary<int, ParameterNode> ParameterNodes { get; } = new Dictionary<int, ParameterNode>();
         }
+
+        private class ParameterNode
+        {
+            public long EntryPosition;
+        }
+
 
         private class FontNode
         {
